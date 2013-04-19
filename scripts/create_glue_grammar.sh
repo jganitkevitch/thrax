@@ -6,5 +6,6 @@ then
     THRAX="`basename $0`/.."
 fi
 
-java -cp $THRAX/bin/thrax.jar edu.jhu.thrax.util.CreateGlueGrammar $1
+java -cp $JOSHUA/lib/*:$HADOOP/*:$THRAX/bin/thrax.jar \
+    edu.jhu.thrax.util.CreateGlueGrammar $1
 
