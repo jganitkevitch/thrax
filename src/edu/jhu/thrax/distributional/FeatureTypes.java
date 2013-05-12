@@ -29,13 +29,13 @@ public class FeatureTypes {
     }
   }
 
-  public enum Label {
+  public enum Factor {
     NONE(0, "none"), LEX(1, "lex"), LEM(2, "lem"), POS(3, "pos"), NER(4, "ner");
 
     public final int code;
     public final String name;
 
-    Label(int code, String name) {
+    Factor(int code, String name) {
       this.code = code;
       this.name = name;
     }

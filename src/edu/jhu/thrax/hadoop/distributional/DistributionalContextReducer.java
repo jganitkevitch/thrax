@@ -11,8 +11,9 @@ import edu.jhu.jerboa.sim.SLSH;
 import edu.jhu.jerboa.sim.Signature;
 
 public class DistributionalContextReducer
-    extends Reducer<Text, ContextWritable, SignatureWritable, NullWritable> {
+    extends Reducer<Text, ContextGroups, SignatureWritable, NullWritable> {
 
+  private String[] groups;
   private int minCount;
   private SLSH slsh;
 
@@ -20,23 +21,24 @@ public class DistributionalContextReducer
     Configuration conf = context.getConfiguration();
     minCount = conf.getInt("thrax.min-phrase-count", 3);
     slsh = CommonLSH.getSLSH(conf);
+    groups = conf.getStrings("thrax.contexts", "context");
   }
 
-  protected void reduce(Text key, Iterable<ContextWritable> values, Context context)
+  protected void reduce(Text key, Iterable<ContextGroups> values, Context context)
       throws IOException, InterruptedException {
-    ContextWritable reduced = new ContextWritable();
-    for (ContextWritable input : values) {
+    ContextGroups reduced = new ContextGroups();
+    for (ContextGroups input : values)
       reduced.merge(input, slsh);
+
+    if (reduced.strength() >= minCount) {
+      for (int i = 0; i < groups.length; ++i) {
+        Signature reduced_signature = new Signature();
+        reduced_signature.sums = reduced.sums(i);
+        slsh.buildSignature(reduced_signature, false);
+        context.write(
+            new SignatureWritable(key, new Text(groups[i]), reduced_signature, reduced.strength()),
+            NullWritable.get());
+      }
     }
-    if (!reduced.compacted.get()) reduced.compact(slsh);
-    if (reduced.strength.get() >= minCount) {
-      Signature reduced_signature = new Signature();
-      // TODO: double-check need for deep copy?
-      reduced_signature.sums = reduced.sums;
-      slsh.buildSignature(reduced_signature, false);
-      context.write(new SignatureWritable(key, reduced_signature, reduced.strength.get()),
-          NullWritable.get());
-    }
-    return;
   }
 }

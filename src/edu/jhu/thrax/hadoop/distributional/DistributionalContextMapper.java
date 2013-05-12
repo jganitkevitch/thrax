@@ -8,21 +8,21 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import edu.jhu.thrax.distributional.ContextPhrase;
-import edu.jhu.thrax.distributional.ContextPhraseExtractor;
+import edu.jhu.thrax.distributional.PhraseContext;
+import edu.jhu.thrax.distributional.PhraseContextExtractor;
 import edu.jhu.thrax.util.MalformedInput;
 import edu.jhu.thrax.util.exceptions.EmptySentenceException;
 import edu.jhu.thrax.util.exceptions.MalformedInputException;
 import edu.jhu.thrax.util.exceptions.MalformedParseException;
 import edu.jhu.thrax.util.exceptions.NotEnoughFieldsException;
 
-public class DistributionalContextMapper extends Mapper<LongWritable, Text, Text, ContextWritable> {
+public class DistributionalContextMapper extends Mapper<LongWritable, Text, Text, ContextGroups> {
 
-  private ContextPhraseExtractor extractor;
+  private PhraseContextExtractor extractor;
 
   protected void setup(Context context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    extractor = new ContextPhraseExtractor(conf);
+    extractor = new PhraseContextExtractor(conf);
   }
 
   protected void map(LongWritable key, Text value, Context context) throws IOException,
@@ -30,10 +30,10 @@ public class DistributionalContextMapper extends Mapper<LongWritable, Text, Text
     if (extractor == null) return;
     String line = value.toString();
     try {
-      List<ContextPhrase> phrases = extractor.extract(line);
-      for (ContextPhrase cp : phrases) {
-        context.write(cp.getPhrase(), new ContextWritable(1, cp.getFeatures()));
-      }
+      List<PhraseContext> phrases = extractor.extract(line);
+      for (PhraseContext pc : phrases)
+        context.write(pc.getPhrase(), pc.getContexts());
+      
     } catch (NotEnoughFieldsException e) {
       context.getCounter(MalformedInput.NOT_ENOUGH_FIELDS).increment(1);
     } catch (EmptySentenceException e) {

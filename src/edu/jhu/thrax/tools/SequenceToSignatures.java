@@ -31,7 +31,7 @@ public class SequenceToSignatures {
   private static void usage() {
     System.err.println("Usage: java edu.jhu.thrax.tools.SequenceToSignature");
     System.err.println("\t -i sequence_file \t Sequence file from Thrax signature extraction.");
-    System.err.println("\t -o prefix \t\t Prefix for signature files: <prefix>.0001.keyz.gz.");
+    System.err.println("\t -o prefix \t\t Prefix for signature files: <prefix>.0001.keys.gz.");
     System.err.println("\t -c chunk_size \t\t Number of keys per signature chunk.");
     System.err.println();
   }

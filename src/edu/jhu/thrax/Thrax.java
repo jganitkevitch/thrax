@@ -156,6 +156,7 @@ public class Thrax extends Configured implements Tool {
       // Schedule aggregation and output job.
       scheduler.schedule(ParaphraseAggregationJob.class);
       scheduler.percolate(ParaphraseAggregationJob.class);
+      
     } else if ("distributional".equals(type)) {
       scheduler.schedule(DistributionalContextExtractionJob.class);
       scheduler.schedule(DistributionalContextSortingJob.class);

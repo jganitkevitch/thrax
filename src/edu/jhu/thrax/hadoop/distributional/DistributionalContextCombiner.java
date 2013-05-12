@@ -9,7 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import edu.jhu.jerboa.sim.SLSH;
 
 public class DistributionalContextCombiner
-    extends Reducer<Text, ContextWritable, Text, ContextWritable> {
+    extends Reducer<Text, ContextGroups, Text, ContextGroups> {
 
   private SLSH slsh;
 
@@ -18,14 +18,11 @@ public class DistributionalContextCombiner
     slsh = CommonLSH.getSLSH(conf);
   }
 
-  protected void reduce(Text key, Iterable<ContextWritable> values, Context context)
+  protected void reduce(Text key, Iterable<ContextGroups> values, Context context)
       throws IOException, InterruptedException {
-    ContextWritable combined = new ContextWritable();
-    for (ContextWritable input : values) {
+    ContextGroups combined = new ContextGroups();
+    for (ContextGroups input : values)
       combined.merge(input, slsh);
-    }
-    if (!combined.compacted.get()) combined.compact(slsh);
     context.write(key, combined);
-    return;
   }
 }

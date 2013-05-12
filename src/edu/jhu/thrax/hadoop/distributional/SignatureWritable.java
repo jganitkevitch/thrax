@@ -15,17 +15,20 @@ import edu.jhu.thrax.hadoop.datatypes.PrimitiveUtils;
 
 public class SignatureWritable implements WritableComparable<SignatureWritable> {
   public Text key;
+  public Text group;
   public byte[] bytes;
   public IntWritable strength;
 
   public SignatureWritable() {
     this.key = new Text();
+    this.group = new Text();
     this.bytes = null;
     this.strength = new IntWritable();
   }
 
-  public SignatureWritable(Text key, Signature signature, int strength) {
+  public SignatureWritable(Text key, Text group, Signature signature, int strength) {
     this.key = new Text(key);
+    this.group = new Text(group);
     // TODO: deep copy?
     this.bytes = signature.bytes;
     this.strength = new IntWritable(strength);
@@ -34,6 +37,7 @@ public class SignatureWritable implements WritableComparable<SignatureWritable> 
   @Override
   public void readFields(DataInput in) throws IOException {
     key.readFields(in);
+    group.readFields(in);
     bytes = PrimitiveUtils.readByteArray(in);
     strength.readFields(in);
   }
@@ -41,6 +45,7 @@ public class SignatureWritable implements WritableComparable<SignatureWritable> 
   @Override
   public void write(DataOutput out) throws IOException {
     key.write(out);
+    group.write(out);
     PrimitiveUtils.writeByteArray(out, bytes);
     strength.write(out);
   }
@@ -50,7 +55,9 @@ public class SignatureWritable implements WritableComparable<SignatureWritable> 
     int cmp = strength.compareTo(that.strength);
     // Flip sign for descending sort order.
     if (cmp != 0) return -cmp;
-    return key.compareTo(that.key);
+    cmp = key.compareTo(that.key);
+    if (cmp != 0) return cmp;
+    return group.compareTo(that.group);
   }
 
   public static class SignaturePartitioner extends Partitioner<SignatureWritable, Writable> {
