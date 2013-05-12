@@ -171,7 +171,7 @@ public class ParaphraseCoverage {
       int num_covered = 0;
       int num_paraphrases = 0;
 
-      int score_sum = 0;
+      double score_sum = 0;
       int score_count = 0;
 
       for (ScoredParaphrase sp : paraphrases) {
