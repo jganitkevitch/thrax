@@ -26,6 +26,7 @@ public class PhraseContextExtractor {
     
     String[] group_names = conf.getStrings("thrax.contexts", "context");
     union = new FeatureSet();
+    groups = new ArrayList<FeatureSet>();
     for (String g : group_names) {
       FeatureSet group = new FeatureSet(conf, g);
       groups.add(group);

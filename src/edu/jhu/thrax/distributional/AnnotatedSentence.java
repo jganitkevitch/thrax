@@ -62,7 +62,6 @@ public class AnnotatedSentence {
         cpdep = new DependencyStructure(inputs[5], this, fs.factors(Type.CPDEP));
 
     } catch (Exception e) {
-      e.printStackTrace();
       throw new MalformedInputException();
     }
   }
@@ -77,6 +76,8 @@ public class AnnotatedSentence {
   }
 
   private String[][] buildGramFeatures(String[] sentence, int N) {
+    if (N == 0) return new String[0][0];
+
     String[][] cache = new String[length][];
     for (int i = 0; i <= length - N; i++)
       cache[i] = new String[N];
@@ -106,12 +107,12 @@ public class AnnotatedSentence {
 
   private void addNgramFeatures(Map<String, Integer> features, int from, int to, FeatureSet fs) {
     for (Factor f : Factor.values()) {
-      String left_prefix = Directionality.LEFT + f.name;
+      String left_prefix = Directionality.LEFT.name + f.name;
       for (int cf = Math.max(0, from - fs.context(f)); cf < from; cf++)
         for (int l = 0; l < Math.min(fs.gram(f), from - cf); l++)
           Utils.increment(features, left_prefix + ngrams[f.code][cf][l] + (from - cf));
 
-      String right_prefix = Directionality.RIGHT + f.name;
+      String right_prefix = Directionality.RIGHT.name + f.name;
       final int right_boundary = Math.min(length, to + fs.context(f));
       for (int cf = to; cf < right_boundary; cf++)
         for (int l = 0; l < Math.min(fs.gram(f), right_boundary - cf); l++)
@@ -120,11 +121,9 @@ public class AnnotatedSentence {
   }
 
   private void addDependencyFeatures(Map<String, Integer> features, int from, int to, FeatureSet fs) {
-    for (Type t : Type.values()) {
-      if (fs.use(Type.DEP)) dep.addFeatures(features, this, from, to, fs.factors(t));
-      if (fs.use(Type.CDEP)) cdep.addFeatures(features, this, from, to, fs.factors(t));
-      if (fs.use(Type.CPDEP)) cpdep.addFeatures(features, this, from, to, fs.factors(t));
-    }
+    if (fs.use(Type.DEP)) dep.addFeatures(features, this, from, to, fs.factors(Type.DEP));
+    if (fs.use(Type.CDEP)) cdep.addFeatures(features, this, from, to, fs.factors(Type.CDEP));
+    if (fs.use(Type.CPDEP)) cpdep.addFeatures(features, this, from, to, fs.factors(Type.CPDEP));
   }
 
   private void addSyntaxFeatures(Map<String, Integer> features, int from, int to) {

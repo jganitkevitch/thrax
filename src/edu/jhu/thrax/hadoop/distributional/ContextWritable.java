@@ -36,12 +36,13 @@ public class ContextWritable implements Writable {
     this.strength = s;
     this.sums = sums;
   }
-  
+
   public ContextWritable(Map<String, Integer> features, SLSH slsh) {
     Signature signature = new Signature();
     slsh.initializeSignature(signature);
     for (String feature_name : features.keySet())
       slsh.updateSignature(signature, feature_name, features.get(feature_name), 1);
+
     sums = signature.sums;
     strength = 1;
   }

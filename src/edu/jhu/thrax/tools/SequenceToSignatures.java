@@ -71,7 +71,6 @@ public class SequenceToSignatures {
     Configuration config = new Configuration();
     SignatureWritable signature = new SignatureWritable();
 
-
     SequenceFile.Reader reader;
     if (local) {
       Path path = new Path(input_file);
@@ -86,29 +85,38 @@ public class SequenceToSignatures {
 
     int chunk_id = 0;
     int key_count = 0;
+    int group_count = 0;
+    String group = null;
 
     FileOutputStream bytes_out = null;
     BufferedWriter strengths_writer = null;
     BufferedWriter keys_writer = null;
 
     while (reader.next(signature)) {
-      if (key_count % chunk_size == 0) {
+      if (!signature.group.toString().equals(group) || key_count % chunk_size == 0) {
         if (key_count != 0) {
           keys_writer.close();
           bytes_out.close();
           strengths_writer.close();
         }
+        if (!signature.group.toString().equals(group)) {
+          chunk_id = 0;
+          key_count = 0;
+          group_count++;
+        }
+        group = signature.group.toString();
         String chunk_tag = String.format("-%05d", chunk_id);
-        writeConfig(output_prefix + chunk_tag + ".config", signature.bytes.length * 8);
-        bytes_out = new FileOutputStream(output_prefix + chunk_tag + ".bytes");
-        strengths_writer = FileManager.getWriter(output_prefix + chunk_tag + ".strengths.gz");
-        keys_writer = FileManager.getWriter(output_prefix + chunk_tag + ".keys.gz");
+        String prefix = output_prefix + "." + group.toString() + chunk_tag;
+        writeConfig(prefix + ".config", signature.bytes.length * 8);
+        bytes_out = new FileOutputStream(prefix + ".bytes");
+        strengths_writer = FileManager.getWriter(prefix + ".strengths.gz");
+        keys_writer = FileManager.getWriter(prefix + ".keys.gz");
         chunk_id++;
       }
       keys_writer.write(signature.key.toString());
       keys_writer.newLine();
       bytes_out.write(signature.bytes);
-      strengths_writer.write("" + signature.strength.get());
+      strengths_writer.write("" + signature.strength);
       strengths_writer.newLine();
       key_count++;
     }
@@ -116,5 +124,7 @@ public class SequenceToSignatures {
     keys_writer.close();
     bytes_out.close();
     strengths_writer.close();
+
+    System.err.println("Read " + key_count + " keys and " + group_count + " groups.");
   }
 }

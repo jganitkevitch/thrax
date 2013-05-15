@@ -14,7 +14,11 @@ public class DependencyStructure {
   private ArrayList<Dependency>[] govern;
   private Dependency[] depend;
 
+  @SuppressWarnings("unchecked")
   public DependencyStructure(String input, AnnotatedSentence sentence, boolean[] factors) {
+    govern = new ArrayList[sentence.length];
+    depend = new Dependency[sentence.length];
+    
     for (int i = 0; i < sentence.length; i++)
       govern[i] = new ArrayList<Dependency>();
 
