@@ -15,15 +15,15 @@ public class PhraseContextExtractor {
 
   private final int MAX_PHRASE_LENGTH;
   private SLSH slsh;
-  
+
   private FeatureSet union;
   private List<FeatureSet> groups;
-  
+
   public PhraseContextExtractor(Configuration conf) {
     MAX_PHRASE_LENGTH = conf.getInt("thrax.max-phrase-length", 4);
-    
+
     slsh = CommonLSH.getSLSH(conf);
-    
+
     String[] group_names = conf.getStrings("thrax.contexts", "context");
     union = new FeatureSet();
     groups = new ArrayList<FeatureSet>();
@@ -40,7 +40,7 @@ public class PhraseContextExtractor {
     for (int i = 0; i < sentence.length; i++) {
       for (int j = i + 1; j <= Math.min(i + MAX_PHRASE_LENGTH, sentence.length); j++) {
         ContextWritable[] contexts = new ContextWritable[groups.size()];
-        for (int k=0; k<groups.size(); ++k)
+        for (int k = 0; k < groups.size(); ++k)
           contexts[k] = new ContextWritable(sentence.getFeatures(groups.get(k), i, j), slsh);
         PhraseContext pc = new PhraseContext(sentence.getPhrase(i, j), new ContextGroups(contexts));
         output.add(pc);

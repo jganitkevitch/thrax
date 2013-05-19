@@ -88,7 +88,7 @@ public class AnnotatedSentence {
     for (int cf = 0; cf < length; cf++) {
       sb.delete(0, sb.length());
       for (int l = 0; l < Math.min(N, length - cf); l++) {
-        sb.append(sentence[cf + l]);
+        sb.append("_" + sentence[cf + l]);
         cache[cf][l] = sb.toString();
       }
     }
