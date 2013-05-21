@@ -43,7 +43,6 @@
 			</fileset>
 			<manifest>
 				<attribute name="Main-Class" value="edu.jhu.thrax.Thrax" />
-				<attribute name="Class-Path" value="." />
 			</manifest>
 		</jar>
 	</target>
@@ -58,7 +57,6 @@
 			</fileset>
 			<manifest>
 				<attribute name="Main-Class" value="edu.jhu.thrax.Thrax" />
-				<attribute name="Class-Path" value="." />
 			</manifest>
 			<zipfileset excludes="META-INF/*.SF" src="${lib}/commons-lang3-3.1.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${lib}/jerboa.jar" />

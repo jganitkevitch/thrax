@@ -1,14 +1,12 @@
 package edu.jhu.thrax.hadoop.distributional;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import edu.jhu.thrax.distributional.PhraseContext;
 import edu.jhu.thrax.distributional.PhraseContextExtractor;
 import edu.jhu.thrax.util.MalformedInput;
 import edu.jhu.thrax.util.exceptions.EmptySentenceException;
@@ -30,9 +28,7 @@ public class DistributionalContextMapper extends Mapper<LongWritable, Text, Text
     if (extractor == null) return;
     String line = value.toString();
     try {
-      List<PhraseContext> phrases = extractor.extract(line);
-      for (PhraseContext pc : phrases)
-        context.write(pc.getPhrase(), pc.getContexts());
+      extractor.extract(line, context);
       
     } catch (NotEnoughFieldsException e) {
       context.getCounter(MalformedInput.NOT_ENOUGH_FIELDS).increment(1);
