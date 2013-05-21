@@ -5,6 +5,7 @@ import java.util.Map;
 import edu.jhu.thrax.distributional.FeatureTypes.Directionality;
 import edu.jhu.thrax.distributional.FeatureTypes.Factor;
 import edu.jhu.thrax.distributional.FeatureTypes.Flavor;
+import edu.jhu.thrax.distributional.FeatureTypes.Type;
 import edu.jhu.thrax.util.FormatUtils;
 import edu.jhu.thrax.util.Utils;
 
@@ -19,7 +20,7 @@ public class Dependency {
   final String[] dep_features;
   final String[] gov_features;
 
-  public Dependency(String entry, boolean[] labeling, AnnotatedSentence sentence) {
+  public Dependency(String entry, boolean[] labeling, AnnotatedSentence sentence, Type t) {
     String[] fields = FormatUtils.P_DASH.split(entry);
 
     type = fields[0];
@@ -30,16 +31,14 @@ public class Dependency {
     dep_features = new String[Factor.values().length];
     gov_features = new String[Factor.values().length];
 
-    Directionality dep_side = (gov > dep ? Directionality.RIGHT : Directionality.LEFT);
-    Directionality gov_side = (gov > dep ? Directionality.LEFT : Directionality.RIGHT);
+    String dep_side = t.name + (gov > dep ? Directionality.RIGHT.name : Directionality.LEFT.name);
+    String gov_side = t.name + (gov > dep ? Directionality.LEFT.name : Directionality.RIGHT.name);
 
     for (Factor f : Factor.values()) {
       if (labeling[f.code]) {
         dep_features[f.code] =
-            dep_side.name + Flavor.DEP.name + type + f.name
-                + (gov == -1 ? ROOT : sentence.get(f, gov));
-        gov_features[f.code] =
-            gov_side.name + Flavor.GOV.name + type + f.name + sentence.get(f, dep);
+            dep_side + Flavor.DEP.name + type + f.name + (gov == -1 ? ROOT : sentence.get(f, gov));
+        gov_features[f.code] = gov_side + Flavor.GOV.name + type + f.name + sentence.get(f, dep);
       } else {
         dep_features[f.code] = null;
         gov_features[f.code] = null;

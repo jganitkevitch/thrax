@@ -55,11 +55,12 @@ public class AnnotatedSentence {
 
       generateAllGramFeatures(fs);
 
-      if (fs.use(Type.DEP)) dep = new DependencyStructure(inputs[3], this, fs.factors(Type.DEP));
+      if (fs.use(Type.DEP))
+        dep = new DependencyStructure(inputs[3], this, Type.DEP, fs.factors(Type.DEP));
       if (fs.use(Type.CDEP))
-        cdep = new DependencyStructure(inputs[4], this, fs.factors(Type.CDEP));
+        cdep = new DependencyStructure(inputs[4], this, Type.CDEP, fs.factors(Type.CDEP));
       if (fs.use(Type.CPDEP))
-        cpdep = new DependencyStructure(inputs[5], this, fs.factors(Type.CPDEP));
+        cpdep = new DependencyStructure(inputs[5], this, Type.CPDEP, fs.factors(Type.CPDEP));
 
     } catch (Exception e) {
       throw new MalformedInputException();
@@ -99,8 +100,9 @@ public class AnnotatedSentence {
     Map<String, Integer> features = new HashMap<String, Integer>();
 
     addNgramFeatures(features, from, to, fs);
-    addSyntaxFeatures(features, from, to);
     addDependencyFeatures(features, from, to, fs);
+
+    if (fs.use(Type.SYN)) addSyntaxFeatures(features, from, to);
 
     return features;
   }
