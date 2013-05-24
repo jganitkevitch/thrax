@@ -11,7 +11,7 @@ public class CommonLSH {
     try {
       slsh = new SLSH(false);
       slsh.initialize(conf.getInt("thrax.lsh-num-bits", 256),
-          conf.getInt("thrax.lsh-pool-size", 100000), conf.getInt("thrax.lsh-random-seed", 42));
+          conf.getInt("thrax.lsh-pool-size", 17), conf.getInt("thrax.lsh-random-seed", 42));
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);

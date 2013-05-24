@@ -22,6 +22,12 @@ public class ContextGroups implements Writable {
     groups = contexts;
   }
   
+  public ContextGroups(ContextWritable[] contexts, int num, int k) {
+    groups = new ContextWritable[num];
+    for (int i = 0; i < groups.length; ++i)
+      groups[i] = contexts[k + i];
+  }
+  
   public ContextGroups(List<ContextWritable> contexts) {
     groups = new ContextWritable[contexts.size()];
     for (int i = 0; i < groups.length; ++i)
