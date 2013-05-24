@@ -110,15 +110,16 @@ public class AnnotatedSentence {
   private void addNgramFeatures(Map<String, Integer> features, int from, int to, FeatureSet fs) {
     for (Factor f : Factor.values()) {
       String left_prefix = Directionality.LEFT.name + f.name;
-      for (int cf = Math.max(0, from - fs.context(f)); cf < from; cf++)
-        for (int l = 0; l < Math.min(fs.gram(f), from - cf); l++)
-          Utils.increment(features, left_prefix + ngrams[f.code][cf][l] + (from - cf));
+      String[][] fgrams = ngrams[f.code];
+      for (int cf = Math.max(0, from - fs.context(f)); cf < from; ++cf)
+        for (int l = 0; l < Math.min(fs.gram(f), from - cf); ++l)
+          Utils.increment(features, left_prefix + fgrams[cf][l] + (from - cf));
 
       String right_prefix = Directionality.RIGHT.name + f.name;
       final int right_boundary = Math.min(length, to + fs.context(f));
-      for (int cf = to; cf < right_boundary; cf++)
-        for (int l = 0; l < Math.min(fs.gram(f), right_boundary - cf); l++)
-          Utils.increment(features, right_prefix + ngrams[f.code][cf][l] + (cf - to + 1));
+      for (int cf = to; cf < right_boundary; ++cf)
+        for (int l = 0; l < Math.min(fs.gram(f), right_boundary - cf); ++l)
+          Utils.increment(features, right_prefix + fgrams[cf][l] + (cf - to + 1));
     }
   }
 
