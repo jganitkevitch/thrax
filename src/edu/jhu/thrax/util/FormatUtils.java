@@ -31,6 +31,7 @@ public class FormatUtils {
   public static final Pattern P_SLASH = Pattern.compile("/");
   public static final Pattern P_BSLASH = Pattern.compile("\\\\");
   public static final Pattern P_DASH = Pattern.compile("-");
+  public static final Pattern P_TAB = Pattern.compile("\t");
   public static final Pattern P_COMMA_OR_SPACE = Pattern.compile("\\s+|,");
 
 
