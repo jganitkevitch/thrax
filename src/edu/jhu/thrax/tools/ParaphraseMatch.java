@@ -2,7 +2,9 @@ package edu.jhu.thrax.tools;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 import edu.jhu.jerboa.util.FileManager;
@@ -50,12 +52,22 @@ public class ParaphraseMatch {
       return;
     }
 
-    HashSet<String> phrases = new HashSet<String>();
+    HashMap<String, List<Double>> phrases = new HashMap<String, List<Double>>();
 
     try {
       LineReader reference_reader = new LineReader(reference_file);
-      while (reference_reader.hasNext())
-        phrases.add(reference_reader.next().trim());
+      while (reference_reader.hasNext()) {
+        String line = reference_reader.next().trim();
+        if (line.contains("\t")) {
+          String[] fields = FormatUtils.P_TAB.split(line);
+          if (!phrases.containsKey(fields[1])) {
+            phrases.put(fields[1], new ArrayList<Double>());
+          }
+          phrases.get(fields[1]).add(Double.parseDouble(fields[0]));
+        } else {
+          phrases.put(line, null);
+        }
+      }
       reference_reader.close();
 
       BufferedWriter output_writer = FileManager.getWriter(output_file);
@@ -68,8 +80,15 @@ public class ParaphraseMatch {
         String[] fields = FormatUtils.P_DELIM.split(rule_line);
         String candidate = fields[0] + " ||| " + fields[1] + " ||| " + fields[2];
 
-        if (phrases.contains(candidate)) {
-          output_writer.write(rule_line + "\n");
+        if (phrases.containsKey(candidate)) {
+          double score = 0.0;
+          if (phrases.get(candidate) != null) {
+            for (double s : phrases.get(candidate))
+              score += s;
+            score /= phrases.get(candidate).size();
+          }
+          output_writer.write(candidate + " ||| " + (score != 0 ? "HumanScore=" + score + " " : "")
+              + fields[3] + "\n");
           ++num_found;
         }
       }
