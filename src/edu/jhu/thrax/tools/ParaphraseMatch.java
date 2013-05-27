@@ -76,8 +76,9 @@ public class ParaphraseMatch {
       int num_found = 0;
       while (reader.hasNext()) {
         String rule_line = reader.next().trim();
-
         String[] fields = FormatUtils.P_DELIM.split(rule_line);
+        if (fields.length < 4) continue;
+        
         String candidate = fields[0] + " ||| " + fields[1] + " ||| " + fields[2];
 
         if (phrases.containsKey(candidate)) {
