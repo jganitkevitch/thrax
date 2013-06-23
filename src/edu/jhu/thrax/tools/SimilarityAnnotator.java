@@ -40,7 +40,7 @@ public class SimilarityAnnotator {
     String[] tgt;
     ArrayList<Integer>[] src_alignment;
     ArrayList<Integer>[] tgt_alignment;
-    int counter = 0;
+    long counter = 0;
 
     glue = labeled ? " " + similarityLabel + "=" : " ";
 
@@ -54,9 +54,9 @@ public class SimilarityAnnotator {
       src = gfields[1].split(" ");
       tgt = gfields[2].split(" ");
 
-      String aline = gfields[4];
-
       try {
+        String aline = gfields[4];
+        
         String[] apoints = aline.split(" ");
 
         src_alignment = new ArrayList[src.length];
@@ -101,8 +101,8 @@ public class SimilarityAnnotator {
         else
           System.out.println(gline);
       } catch (Exception e) {
-        System.out.print(gline);
-        if (!sparse) System.out.print(glue + "0");
+        e.printStackTrace();
+        System.err.println("Line " + counter + ": " + gline);
       }
     }
   }
