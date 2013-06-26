@@ -20,6 +20,7 @@ public class SplitAndFilter {
     String grammar_file = null;
     String filter_file = null;
     String output_prefix = null;
+    boolean scored = false;
 
     for (int i = 0; i < args.length; i++) {
       if ("-g".equals(args[i]) && (i < args.length - 1)) {
@@ -28,6 +29,8 @@ public class SplitAndFilter {
         filter_file = args[++i];
       } else if ("-o".equals(args[i]) && (i < args.length - 1)) {
         output_prefix = args[++i];
+      } else if ("-s".equals(args[i])) {
+        scored = true;
       }
     }
 
@@ -81,12 +84,15 @@ public class SplitAndFilter {
         boolean phrasal = true;
         boolean drop = true;
 
+        int src_idx = (scored ? 2 : 1);
+        int tgt_idx = src_idx + 1;      
+        
         try {
           String[] fields = FormatUtils.P_DELIM.split(rule_line);
-          String[] source = FormatUtils.P_SPACE.split(fields[1]);
-          String[] target = FormatUtils.P_SPACE.split(fields[2]);
+          String[] source = FormatUtils.P_SPACE.split(fields[src_idx]);
+          String[] target = FormatUtils.P_SPACE.split(fields[tgt_idx]);
 
-          boolean self = fields[1].equals(fields[2]);
+          boolean self = fields[src_idx].equals(fields[tgt_idx]);
 
           source_words.clear();
           target_words.clear();
