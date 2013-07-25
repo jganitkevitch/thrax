@@ -21,13 +21,13 @@ public class ContextGroups implements Writable {
   public ContextGroups(ContextWritable[] contexts) {
     groups = contexts;
   }
-  
+
   public ContextGroups(ContextWritable[] contexts, int num, int k) {
     groups = new ContextWritable[num];
     for (int i = 0; i < groups.length; ++i)
       groups[i] = contexts[k + i];
   }
-  
+
   public ContextGroups(List<ContextWritable> contexts) {
     groups = new ContextWritable[contexts.size()];
     for (int i = 0; i < groups.length; ++i)
@@ -42,20 +42,19 @@ public class ContextGroups implements Writable {
     if (that.groups.length != this.groups.length)
       throw new RuntimeException("Mismatched number of context groups: " + this.groups.length
           + " versus " + that.groups.length + ".");
-    for (int i=0; i< this.groups.length; ++i)
+    for (int i = 0; i < this.groups.length; ++i)
       this.groups[i].merge(that.groups[i], slsh);
   }
-  
+
   public int strength() {
-    if (groups != null && groups.length > 0)
-      return groups[0].strength;
-    return 0;      
+    if (groups != null && groups.length > 0) return groups[0].strength;
+    return 0;
   }
 
   public float[] sums(int i) {
     return groups[i].sums;
   }
-  
+
   @Override
   public void readFields(DataInput in) throws IOException {
     groups = new ContextWritable[WritableUtils.readVInt(in)];
