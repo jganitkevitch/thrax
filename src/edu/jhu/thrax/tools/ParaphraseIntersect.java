@@ -2,11 +2,10 @@ package edu.jhu.thrax.tools;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.HashSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -31,6 +30,7 @@ public class ParaphraseIntersect {
     int threshold = 0;
 
     boolean identity = false;
+    boolean inner_match = false;
 
     for (int i = 0; i < args.length; i++) {
       if ("-g".equals(args[i]) && (i < args.length - 1)) {
@@ -45,6 +45,8 @@ public class ParaphraseIntersect {
         threshold = Integer.parseInt(args[++i]);
       } else if ("-i".equals(args[i])) {
         identity = true;
+      } else if ("-inner-match".equals(args[i])) {
+        inner_match = true;
       }
     }
 
@@ -77,79 +79,72 @@ public class ParaphraseIntersect {
       }
       weights_reader.close();
 
+      HashSet<String> ref_rules = new HashSet<String>();
+      HashSet<String> ref_sources = new HashSet<String>();
 
       ArrayList<Double> missed = new ArrayList<Double>();
       ArrayList<Double> found = new ArrayList<Double>();
 
-      LineReader gread = new LineReader(grammar_file);
       LineReader rread = new LineReader(reference_file);
+      while (rread.hasNext()) {
+        String line = rread.next().trim();
+        String[] rfs = FormatUtils.P_DELIM.split(line);
+        double rarity = Double.parseDouble(rfs[3]);
+        int count = (int) Math.round(1 - Math.log(rarity));
+        if (count >= threshold && !line.contains("[X") && (identity || !rfs[1].equals(rfs[2]))) {
+          String rline = rfs[0] + " ||| " + rfs[1] + " ||| " + rfs[2];
+          ref_rules.add(rline);
+          ref_sources.add(rfs[1]);
+        }
+      }
+      rread.close();
+      int num_references = ref_rules.size();
 
-      String rline = null;
-      
-      // TODO: fix sorting to comply with UNIX sort. Likely: LC_COLLATE=C and String.compareTo()
-      Collator comp = Collator.getInstance(Locale.US);
-
+      LineReader gread = new LineReader(grammar_file);
       System.err.print("[");
-      int num_references = 0;
+      long count = 0;
       while (gread.hasNext()) {
         String rule_line = gread.next().trim();
         String[] fields = FormatUtils.P_DELIM.split(rule_line);
         if (rule_line.contains("[X") || (!identity && fields[3].contains("Identity=1"))) continue;
-
         String rule = fields[0] + " ||| " + fields[1] + " ||| " + fields[2];
-
         double score = 0;
         String[] features = P_SPACE.split(fields[3]);
         for (String f : features) {
           String[] parts = P_EQUAL.split(f);
           if (weights.containsKey(parts[0])) {
-            // TODO: awful hack. fix this.
             double value = Math.abs(Double.parseDouble(parts[1]));
             score += weights.get(parts[0]) * value;
           }
         }
-
-//        System.err.println("Checking: " + rule);
-        
-        while (rread.hasNext() && (rline == null || comp.compare(rule, rline) > 0)) {
-          String line = rread.next().trim();
-          String[] rfs = FormatUtils.P_DELIM.split(line);
-          double rarity = Double.parseDouble(rfs[3]);
-          int count = (int) Math.round(1 - Math.log(rarity));
-          if (count >= threshold && !line.contains("[X") && (identity || !rfs[1].equals(rfs[2]))) {
-            rline = rfs[0] + " ||| " + rfs[1] + " ||| " + rfs[2];
-//            System.err.println("Test: " + rline);
-            num_references++;
+        if (inner_match) {
+          if (ref_rules.contains(rule)) {
+            found.add(score);
+          } else if (ref_sources.contains(fields[1])) {
+            missed.add(score);
+          }
+        } else {
+          if (ref_rules.contains(rule)) {
+            found.add(score);
+          } else {
+            missed.add(score);
           }
         }
-//        System.err.println("Order broken.");
-        
-        if (comp.compare(rule, rline) == 0) {
-//          System.err.println("MATCH: " + rline);
-          found.add(score);
-        } else {
-          missed.add(score);
-        }
+        if (++count % 500000 == 0) System.err.print("-");
       }
       gread.close();
       System.err.println("]");
 
-      while (rread.hasNext()) {
-        rread.next();
-        num_references++;
-      }
-      rread.close();
-
       double[] matched = new double[found.size()];
       int i = 0;
       for (double s : found)
-        matched[i++] = s;
+        matched[i++] = -s;
       found = null;
 
       i = 0;
       double[] unmatched = new double[missed.size()];
       for (double s : missed)
-        unmatched[i++] = s;
+        unmatched[i++] = -s;
       missed = null;
 
       int num_correct = matched.length;
@@ -168,7 +163,7 @@ public class ParaphraseIntersect {
       while (m < matched.length && u < unmatched.length) {
         if (matched[m] < unmatched[u]) {
           // Score - Recall - Precision - Count
-          if (m % 20 == 0)
+          if (m < 10 || m > matched.length - 10 || m % 20 == 0)
             score_writer.write(matched[m] + "\t" + (num_correct / (double) num_references) + "\t"
                 + (num_correct / (double) num_paraphrases) + "\t" + num_paraphrases + "\n");
           m++;

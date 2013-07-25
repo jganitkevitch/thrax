@@ -132,7 +132,7 @@ public class ParaphraseOverlap {
       BufferedWriter score_writer = FileManager.getWriter(output_file);
       while (m < matched.length && u < unmatched.length) {
         if (matched[m] < unmatched[u]) {
-          if (m % 200 == 0)
+          if (m < 30 || m % 40 == 0)
             score_writer.write(matched[m] + "\t" + (num_correct / (double) num_references) + "\t"
                 + (num_correct / (double) num_paraphrases) + "\n");
           m++;
