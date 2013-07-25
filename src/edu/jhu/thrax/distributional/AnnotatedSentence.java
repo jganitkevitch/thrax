@@ -99,9 +99,9 @@ public class AnnotatedSentence {
   public Map<String, Integer> getFeatures(FeatureSet fs, int from, int to) {
     Map<String, Integer> features = new HashMap<String, Integer>();
 
-    addNgramFeatures(features, from, to, fs);
     addDependencyFeatures(features, from, to, fs);
 
+    if (fs.use(Type.NGRAM)) addNgramFeatures(features, from, to, fs);
     if (fs.use(Type.SYN)) addSyntaxFeatures(features, from, to);
 
     return features;
