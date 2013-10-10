@@ -7,7 +7,6 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import edu.jhu.jerboa.util.FileManager;
-import edu.jhu.thrax.util.FormatUtils;
 import edu.jhu.thrax.util.SimpleRule;
 import edu.jhu.thrax.util.io.LineReader;
 
@@ -72,16 +71,21 @@ public class IntersectGrammars {
           String head = rule_one.head();
           rule_one = fill(read_one, rule_one, pp_one);
           rule_two = fill(read_two, rule_two, pp_two);
-          double one_kld = getKLDivergence(pp_one, pp_two);
-          double two_kld = getKLDivergence(pp_two, pp_one);
 
-          write_out.write(String.format("%s ||| %.3f ||| %.3f ||| %.3f ||| %.3f\n", head, one_kld,
-              two_kld, getEntropy(pp_one), getEntropy(pp_two)));
-          
-          for (SimpleRule r : pp_one.values())
-            write_one.write(r + "\n");
-          for (SimpleRule r : pp_two.values())
-            write_two.write(r + "\n");
+          if (pp_one.size() != 1 || pp_two.size() != 1) {
+            double kl_one = getKLDivergence(pp_one, pp_two);
+            double kl_two = getKLDivergence(pp_two, pp_one);
+            double h_one = getEntropy(pp_one);
+            double h_two = getEntropy(pp_two);
+
+            write_out.write(String.format("%s ||| %.3f ||| %.3f ||| %.3f ||| %.3f ||| %.3f\n",
+                head, kl_one, kl_two, h_one, h_two, h_one - h_two));
+
+            for (SimpleRule r : pp_one.values())
+              write_one.write(r + "\n");
+            for (SimpleRule r : pp_two.values())
+              write_two.write(r + "\n");
+          }
         }
         if (++count % 250000 == 0) System.err.print("-");
       }
