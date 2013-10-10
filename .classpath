@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/jerboa.jar"/>
+	<classpathentry kind="lib" path="lib/testng-5.8-jdk15.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/joshua/lib/hadoop-core-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="/Users/juri/Projects/lib/aws-java-sdk-1.6.0.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
