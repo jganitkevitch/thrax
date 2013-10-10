@@ -72,7 +72,7 @@ public class IntersectGrammars {
           rule_one = fill(read_one, rule_one, pp_one);
           rule_two = fill(read_two, rule_two, pp_two);
 
-          if (pp_one.size() != 1 || pp_two.size() != 1) {
+          if (pp_one.size() > 1 && pp_two.size() > 1) {
             double kl_one = getKLDivergence(pp_one, pp_two);
             double kl_two = getKLDivergence(pp_two, pp_one);
             double h_one = getEntropy(pp_one);
