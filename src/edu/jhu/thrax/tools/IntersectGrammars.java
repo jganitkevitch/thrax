@@ -7,6 +7,7 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import edu.jhu.jerboa.util.FileManager;
+import edu.jhu.thrax.util.NegLogMath;
 import edu.jhu.thrax.util.SimpleRule;
 import edu.jhu.thrax.util.io.LineReader;
 
@@ -73,6 +74,8 @@ public class IntersectGrammars {
           rule_two = fill(read_two, rule_two, pp_two);
 
           if (pp_one.size() > 1 && pp_two.size() > 1) {
+            normalize(pp_one);
+            normalize(pp_two);
             double kl_one = getKLDivergence(pp_one, pp_two);
             double kl_two = getKLDivergence(pp_two, pp_one);
             double h_one = getEntropy(pp_one);
@@ -110,13 +113,24 @@ public class IntersectGrammars {
     }
     return null;
   }
+  
+  private static void normalize(Map<String, SimpleRule> pp) {
+    float sum = 64.0f;
+    for (SimpleRule r : pp.values())
+      sum = NegLogMath.logAdd(sum, Math.abs(r.features().get("p(e|f,LHS)")));
+    
+    System.err.println(sum);
+    
+    for (SimpleRule r : pp.values())
+      r.features().put("norm", Math.abs(r.features().get("p(e|f,LHS)")) - sum);
+  }
 
   private static double getKLDivergence(Map<String, SimpleRule> p, Map<String, SimpleRule> q) {
     double kld = 0;
     for (String i : p.keySet()) {
-      double p_i = -p.get(i).features().get("p(e|f,LHS)");
+      double p_i = -p.get(i).features().get("norm");
       if (q.containsKey(i))
-        kld += (p_i + q.get(i).features().get("p(e|f,LHS)")) * Math.exp(p_i);
+        kld += (p_i + q.get(i).features().get("norm")) * Math.exp(p_i);
       else
         kld += (p_i + 16) * Math.exp(p_i);
     }
@@ -126,7 +140,7 @@ public class IntersectGrammars {
   private static double getEntropy(Map<String, SimpleRule> p) {
     double ent = 0;
     for (String i : p.keySet()) {
-      double p_i = p.get(i).features().get("p(e|f,LHS)");
+      double p_i = p.get(i).features().get("norm");
       ent += p_i * Math.exp(-p_i);
     }
     return ent;
