@@ -10,11 +10,11 @@ public class SimpleRule {
   private String source;
   private String target;
   private String lhs;
-  private HashMap<String, Double> features;
+  private HashMap<String, Float> features;
 
   private String rule = null;
   private String head = null;
-  private double cost = Double.NEGATIVE_INFINITY;
+  private double cost = Float.NEGATIVE_INFINITY;
 
   public SimpleRule(String l) {
     line = l.trim();
@@ -26,10 +26,10 @@ public class SimpleRule {
     
     
     String[] feature_entries = FormatUtils.P_SPACE.split(fields[3]);
-    features = new HashMap<String, Double>();
+    features = new HashMap<String, Float>();
     for (String f : feature_entries) {
       String[] parts = FormatUtils.P_EQUAL.split(f);
-      features.put(parts[0], Double.parseDouble(parts[1]));
+      features.put(parts[0], Float.parseFloat(parts[1]));
     }
   }
 
@@ -68,7 +68,7 @@ public class SimpleRule {
     return lhs;
   }
 
-  public HashMap<String, Double> features() {
+  public HashMap<String, Float> features() {
     return features;
   }
 
