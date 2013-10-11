@@ -118,9 +118,6 @@ public class IntersectGrammars {
     float sum = 64.0f;
     for (SimpleRule r : pp.values())
       sum = NegLogMath.logAdd(sum, Math.abs(r.features().get("p(e|f,LHS)")));
-    
-    System.err.println(sum);
-    
     for (SimpleRule r : pp.values())
       r.features().put("norm", Math.abs(r.features().get("p(e|f,LHS)")) - sum);
   }
