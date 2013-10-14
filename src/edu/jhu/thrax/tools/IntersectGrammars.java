@@ -2,7 +2,9 @@ package edu.jhu.thrax.tools;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
@@ -74,6 +76,8 @@ public class IntersectGrammars {
           rule_two = fill(read_two, rule_two, pp_two);
 
           if (pp_one.size() > 1 && pp_two.size() > 1) {
+            // TODO: does the full intersection here make sense?
+            intersect(pp_one, pp_two);
             normalize(pp_one);
             normalize(pp_two);
             double kl_one = getKLDivergence(pp_one, pp_two);
@@ -112,6 +116,21 @@ public class IntersectGrammars {
       pp.put(r.target(), r);
     }
     return null;
+  }
+  
+  private static void intersect(Map<String, SimpleRule> a, Map<String, SimpleRule> b) {
+    Iterator<Entry<String, SimpleRule>> i = a.entrySet().iterator();
+    while (i.hasNext()) {
+      Entry<String, SimpleRule> e = i.next();
+      if (!b.containsKey(e.getKey()))
+        i.remove();
+    }
+    i = b.entrySet().iterator();
+    while (i.hasNext()) {
+      Entry<String, SimpleRule> e = i.next();
+      if (!a.containsKey(e.getKey()))
+        i.remove();
+    }
   }
   
   private static void normalize(Map<String, SimpleRule> pp) {

@@ -30,6 +30,11 @@ public final class PrimitiveUtils {
     return (a == b ? 0 : (a ? 1 : -1));
   }
 
+  public static int compare(float f, float g) {
+    if (f == g) return 0;
+    return (f > g ? 1 : -1);
+  }
+  
   public static final int compareIntArrays(int[] a, int[] b) {
     for (int i = 0; i < Math.min(a.length, b.length); ++i) {
       if (a[i] < b[i]) {
