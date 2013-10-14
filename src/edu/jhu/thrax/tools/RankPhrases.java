@@ -64,10 +64,11 @@ public class RankPhrases {
       reader.close();
 
       for (int i = 0; i < ranks.length; ++i) {
-        final int r = Integer.parseInt(ranks[i]);
+        final boolean descending = (ranks[i].charAt(0) == '-'); 
+        final int r = Integer.parseInt(ranks[i].substring(1));
         Collections.sort(entries, new Comparator<Entry>() {
           public int compare(Entry a, Entry b) {
-            return PrimitiveUtils.compare(a.values[r], b.values[r]);
+            return (descending ? -1 : 1) * PrimitiveUtils.compare(a.values[r], b.values[r]);
           }
         });
         for (int j = 0; j < entries.size(); ++j)
