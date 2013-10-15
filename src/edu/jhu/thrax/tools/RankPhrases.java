@@ -22,6 +22,8 @@ public class RankPhrases {
     String output_file = null;
     String ranks_string = null;
 
+    boolean rank_sum = true;
+
     for (int i = 0; i < args.length; i++) {
       if ("-i".equals(args[i]) && (i < args.length - 1)) {
         input_file = args[++i];
@@ -29,6 +31,8 @@ public class RankPhrases {
         output_file = args[++i];
       } else if ("-r".equals(args[i]) && (i < args.length - 1)) {
         ranks_string = args[++i];
+      } else if ("-p".equals(args[i])) {
+        rank_sum = false;
       }
     }
 
@@ -64,7 +68,7 @@ public class RankPhrases {
       reader.close();
 
       for (int i = 0; i < ranks.length; ++i) {
-        final boolean descending = (ranks[i].charAt(0) == '-'); 
+        final boolean descending = (ranks[i].charAt(0) == '-');
         final int r = Integer.parseInt(ranks[i].substring(1));
         Collections.sort(entries, new Comparator<Entry>() {
           public int compare(Entry a, Entry b) {
@@ -74,11 +78,20 @@ public class RankPhrases {
         for (int j = 0; j < entries.size(); ++j)
           entries.get(j).ranks[i] = j + 1;
       }
-      for (Entry e : entries) {
-        int sum = 0;
-        for (int j = 0; j < rank_num; ++j)
-          sum += e.ranks[j];
-        e.ranks[rank_num] = sum;
+      if (rank_sum) {
+        for (Entry e : entries) {
+          int sum = 0;
+          for (int j = 0; j < rank_num; ++j)
+            sum += e.ranks[j];
+          e.ranks[rank_num] = sum;
+        }
+      } else {
+        for (Entry e : entries) {
+          int prod = 1;
+          for (int j = 0; j < rank_num; ++j)
+            prod *= e.ranks[j];
+          e.ranks[rank_num] = prod;
+        }
       }
 
       Collections.sort(entries, new Comparator<Entry>() {

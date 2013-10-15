@@ -23,6 +23,8 @@ public class IntersectGrammars {
     String grammar_two = null;
     String output_file = null;
 
+    boolean strict_intersect = false;
+
     for (int i = 0; i < args.length; i++) {
       if ("-1".equals(args[i]) && (i < args.length - 1)) {
         grammar_one = args[++i];
@@ -30,6 +32,8 @@ public class IntersectGrammars {
         grammar_two = args[++i];
       } else if ("-o".equals(args[i]) && (i < args.length - 1)) {
         output_file = args[++i];
+      } else if ("-strict".equals(args[i])) {
+        strict_intersect = true;
       }
     }
 
@@ -77,7 +81,7 @@ public class IntersectGrammars {
 
           if (pp_one.size() > 1 && pp_two.size() > 1) {
             // TODO: does the full intersection here make sense?
-            intersect(pp_one, pp_two);
+            if (strict_intersect) intersect(pp_one, pp_two);
             normalize(pp_one);
             normalize(pp_two);
             double kl_one = getKLDivergence(pp_one, pp_two);
@@ -117,22 +121,20 @@ public class IntersectGrammars {
     }
     return null;
   }
-  
+
   private static void intersect(Map<String, SimpleRule> a, Map<String, SimpleRule> b) {
     Iterator<Entry<String, SimpleRule>> i = a.entrySet().iterator();
     while (i.hasNext()) {
       Entry<String, SimpleRule> e = i.next();
-      if (!b.containsKey(e.getKey()))
-        i.remove();
+      if (!b.containsKey(e.getKey())) i.remove();
     }
     i = b.entrySet().iterator();
     while (i.hasNext()) {
       Entry<String, SimpleRule> e = i.next();
-      if (!a.containsKey(e.getKey()))
-        i.remove();
+      if (!a.containsKey(e.getKey())) i.remove();
     }
   }
-  
+
   private static void normalize(Map<String, SimpleRule> pp) {
     float sum = 64.0f;
     for (SimpleRule r : pp.values())
