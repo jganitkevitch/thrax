@@ -24,6 +24,7 @@ public class IntersectGrammars {
     String output_file = null;
 
     boolean strict_intersect = false;
+    int union_minimum = 2;
 
     for (int i = 0; i < args.length; i++) {
       if ("-1".equals(args[i]) && (i < args.length - 1)) {
@@ -32,8 +33,10 @@ public class IntersectGrammars {
         grammar_two = args[++i];
       } else if ("-o".equals(args[i]) && (i < args.length - 1)) {
         output_file = args[++i];
-      } else if ("-strict".equals(args[i])) {
+      } else if ("-strictkl".equals(args[i])) {
         strict_intersect = true;
+      } else if ("-union".equals(args[i]) && (i < args.length - 1)) {
+        union_minimum = Integer.parseInt(args[++i]);
       }
     }
 
@@ -79,23 +82,28 @@ public class IntersectGrammars {
           rule_one = fill(read_one, rule_one, pp_one);
           rule_two = fill(read_two, rule_two, pp_two);
 
-          if (pp_one.size() > 1 && pp_two.size() > 1) {
-            // TODO: does the full intersection here make sense?
-            if (strict_intersect) intersect(pp_one, pp_two);
-            normalize(pp_one);
-            normalize(pp_two);
-            double kl_one = getKLDivergence(pp_one, pp_two);
-            double kl_two = getKLDivergence(pp_two, pp_one);
-            double h_one = getEntropy(pp_one);
-            double h_two = getEntropy(pp_two);
-
-            write_out.write(String.format("%s ||| %.3f ||| %.3f ||| %.3f ||| %.3f ||| %.3f\n",
-                head, kl_one, kl_two, h_one, h_two, h_one - h_two));
-
+          if (countUnion(pp_one, pp_two) > union_minimum) {
             for (SimpleRule r : pp_one.values())
               write_one.write(r + "\n");
             for (SimpleRule r : pp_two.values())
               write_two.write(r + "\n");
+
+            normalize(pp_one);
+            normalize(pp_two);
+            double h_one = getEntropy(pp_one);
+            double h_two = getEntropy(pp_two);
+
+            if (strict_intersect) {
+              intersect(pp_one, pp_two);
+              normalize(pp_one);
+              normalize(pp_two);
+            }
+            double kl_one = getKLDivergence(pp_one, pp_two);
+            double kl_two = getKLDivergence(pp_two, pp_one);
+
+            write_out.write(String.format("%s ||| %.3f ||| %.3f ||| %.3f ||| %.3f ||| %.3f\n",
+                head, kl_one, kl_two, h_one, h_two, h_one - h_two));
+
           }
         }
         if (++count % 250000 == 0) System.err.print("-");
@@ -120,6 +128,14 @@ public class IntersectGrammars {
       pp.put(r.target(), r);
     }
     return null;
+  }
+
+  private static int countUnion(Map<String, SimpleRule> a, Map<String, SimpleRule> b) {
+    int count = 0;
+    for (String h : a.keySet())
+      if (!b.containsKey(h)) count++;
+    count += b.size();
+    return count;
   }
 
   private static void intersect(Map<String, SimpleRule> a, Map<String, SimpleRule> b) {
