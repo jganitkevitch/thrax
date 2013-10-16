@@ -87,9 +87,9 @@ public class RankPhrases {
         }
       } else {
         for (Entry e : entries) {
-          int prod = 1;
+          float prod = 1;
           for (int j = 0; j < rank_num; ++j)
-            prod *= e.ranks[j];
+            if (e.ranks[j] != 0) prod += Math.log(e.ranks[j]);
           e.ranks[rank_num] = prod;
         }
       }
@@ -110,7 +110,7 @@ public class RankPhrases {
   private static class Entry {
     String head;
     float[] values;
-    int[] ranks;
+    float[] ranks;
 
     public Entry(String line, int r) {
       String[] fields = FormatUtils.P_DELIM.split(line);
@@ -118,7 +118,7 @@ public class RankPhrases {
       values = new float[fields.length - 2];
       for (int i = 2; i < fields.length; ++i)
         values[i - 2] = Float.parseFloat(fields[i]);
-      ranks = new int[r];
+      ranks = new float[r];
     }
 
     public String toString() {
@@ -126,7 +126,7 @@ public class RankPhrases {
       for (float f : values)
         sb.append(FormatUtils.DELIM + f);
       for (float r : ranks)
-        sb.append(FormatUtils.DELIM + r);
+        sb.append(FormatUtils.DELIM + (int) r);
       return head + sb.toString();
     }
   }
