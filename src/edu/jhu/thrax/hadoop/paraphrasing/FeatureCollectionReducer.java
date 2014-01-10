@@ -7,6 +7,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import edu.jhu.thrax.hadoop.datatypes.FeatureMap;
 import edu.jhu.thrax.hadoop.datatypes.FeaturePair;
+import edu.jhu.thrax.hadoop.datatypes.FeatureValue;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
 import edu.jhu.thrax.util.Vocabulary;
 
@@ -23,7 +24,7 @@ public class FeatureCollectionReducer
       throws IOException, InterruptedException {
     FeatureMap features = new FeatureMap();
     for (FeaturePair fp : values)
-      features.put(fp.key, fp.val.get());
+      features.put(fp.key, new FeatureValue(fp.val.get()));
     context.write(key, features);
   }
 }

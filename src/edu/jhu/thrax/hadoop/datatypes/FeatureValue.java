@@ -12,9 +12,9 @@ public class FeatureValue extends GenericWritable {
   private static Class[] TYPES = {FloatWritable.class, IntWritable.class, Text.class,
       Annotation.class, AlignmentWritable.class};
 
-  FeatureValue() {}
+  public FeatureValue() {}
 
-  FeatureValue(Writable val) {
+  public FeatureValue(Writable val) {
     this.set(val);
   }
 

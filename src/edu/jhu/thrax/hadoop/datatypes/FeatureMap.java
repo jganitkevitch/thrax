@@ -7,19 +7,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 
-import edu.jhu.thrax.hadoop.features.annotation.AnnotationPassthroughFeature;
 import edu.jhu.thrax.util.Vocabulary;
 
 public class FeatureMap implements Writable {
 
-  private Map<Integer, Writable> map;
+  private Map<Integer, FeatureValue> map;
 
   public FeatureMap() {
-    map = new HashMap<Integer, Writable>();
+    map = new HashMap<Integer, FeatureValue>();
   }
 
   public FeatureMap(FeatureMap fm) {
@@ -29,45 +27,43 @@ public class FeatureMap implements Writable {
   }
 
   public Writable get(int key) {
-    return map.get(key);
+    return map.get(key).get();
   }
 
   public Writable get(String key) {
-    return map.get(Vocabulary.id(key));
+    return map.get(Vocabulary.id(key)).get();
   }
 
-  public void put(int key, Writable val) {
+  public void put(int key, FeatureValue val) {
     map.put(key, val);
+    System.err.println("PUT:  " + Vocabulary.word(key) + " = " + val.get().getClass().getName());
   }
-  
-  public void put(String key, Writable val) {
+
+  public void put(String key, FeatureValue val) {
     map.put(Vocabulary.id(key), val);
+    System.err.println("READ:  " + key + " = " + val.get().getClass().getName());
   }
-  
+
   public boolean containsKey(int key) {
     return map.containsKey(key);
   }
-  
+
   public Set<Integer> keySet() {
     return map.keySet();
   }
-  
+
   @Override
   public void readFields(DataInput in) throws IOException {
     map.clear();
     int size = WritableUtils.readVInt(in);
     for (int i = 0; i < size; ++i) {
       int key = 0;
-      Writable val = null;
+      FeatureValue val = new FeatureValue();
       key = WritableUtils.readVInt(in);
-      if (key == Vocabulary.id(AnnotationPassthroughFeature.LABEL)) {
-        val = new Annotation();
-        val.readFields(in);
-      } else {
-        val = new FloatWritable();
-        val.readFields(in);
-      }
+      val.readFields(in);
       map.put(key, val);
+
+      System.err.println("READ:  " + Vocabulary.word(key) + " = " + val.get().getClass().getName());
     }
   }
 
@@ -76,11 +72,10 @@ public class FeatureMap implements Writable {
     WritableUtils.writeVInt(out, map.size());
     for (int key : map.keySet()) {
       WritableUtils.writeVInt(out, key);
-      if (key == Vocabulary.id(AnnotationPassthroughFeature.LABEL)) {
-        ((Annotation) this.get(key)).write(out);
-      } else {
-        ((FloatWritable) this.get(key)).write(out);
-      }
+      map.get(key).write(out);
+
+      System.err.println("WRITE: " + Vocabulary.word(key) + " = "
+          + map.get(key).get().getClass().getName());
     }
   }
 }

@@ -8,6 +8,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import edu.jhu.thrax.hadoop.datatypes.FeatureMap;
+import edu.jhu.thrax.hadoop.datatypes.FeatureValue;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeature;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureFactory;
@@ -63,7 +64,7 @@ public class AggregationCombiner
       }
     }
     for (PivotedFeature feature : pivotedFeatures)
-      merged.put(feature.getLabel(), feature.finalizeAggregation());
+      merged.put(feature.getLabel(), new FeatureValue(feature.finalizeAggregation()));
     context.write(key, merged);
   }
 }

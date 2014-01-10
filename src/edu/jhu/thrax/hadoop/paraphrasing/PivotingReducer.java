@@ -15,6 +15,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import edu.jhu.thrax.hadoop.datatypes.Annotation;
 import edu.jhu.thrax.hadoop.datatypes.FeatureMap;
+import edu.jhu.thrax.hadoop.datatypes.FeatureValue;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeature;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureFactory;
@@ -100,7 +101,7 @@ public class PivotingReducer extends Reducer<RuleWritable, FeatureMap, RuleWrita
       Annotation annotation =
           (Annotation) features.get(AnnotationPassthroughFeature.LABEL);
       for (AnnotationFeature f : annotationFeatures)
-        features.put(f.getLabel(), f.score(key, annotation));
+        features.put(f.getLabel(), new FeatureValue(f.score(key, annotation)));
 
       if (!prune(features, translationPruningRules))
         targets.add(new ParaphrasePattern(key.target, nts, lhs, key.monotone, features));
@@ -138,7 +139,7 @@ public class PivotingReducer extends Reducer<RuleWritable, FeatureMap, RuleWrita
     try {
       // Compute the features.
       for (PivotedFeature f : pivotedFeatures)
-        pivoted_features.put(f.getLabel(), f.pivot(src.features, tgt.features));
+        pivoted_features.put(f.getLabel(), new FeatureValue(f.pivot(src.features, tgt.features)));
     } catch (Exception e) {
       StringBuilder src_f = new StringBuilder();
       for (int w : src.features.keySet())
