@@ -3,6 +3,7 @@ package edu.jhu.thrax.datatypes;
 import java.util.Iterator;
 
 import edu.jhu.thrax.extraction.SpanLabeler;
+import edu.jhu.thrax.input.Alignment;
 
 /**
  * This class represents a phrase pair. Essentially it is four integers

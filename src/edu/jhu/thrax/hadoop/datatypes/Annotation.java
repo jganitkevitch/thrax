@@ -14,18 +14,23 @@ public class Annotation implements Writable {
 
   // Rule occurrence count.
   private int count;
+  
+  private FeatureMap map;
 
   public Annotation() {
     count = 0;
+    map = new FeatureMap();
   }
 
   public Annotation(int c) {
     count = c;
+    map = new FeatureMap();
   }
 
   public Annotation(Annotation a) {
     count = a.count;
     this.f2e = new AlignmentWritable(a.f2e);
+    map = new FeatureMap(a.map);
   }
   
   public Annotation(AlignmentWritable f2e) {

@@ -28,6 +28,7 @@ public class FormatUtils {
   public static final Pattern P_DELIM = Pattern.compile(DELIMITER_REGEX);
   public static final Pattern P_SPACE = Pattern.compile("\\s+");
   public static final Pattern P_EQUAL = Pattern.compile("=");
+  public static final Pattern P_COLON = Pattern.compile(":");
   public static final Pattern P_SLASH = Pattern.compile("/");
   public static final Pattern P_BSLASH = Pattern.compile("\\\\");
   public static final Pattern P_DASH = Pattern.compile("-");

@@ -5,6 +5,8 @@ import java.util.Iterator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import edu.jhu.thrax.input.ArrayAlignment;
+
 public class ArrayAlignmentTest
 {
 	@Test

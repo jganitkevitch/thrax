@@ -9,8 +9,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import edu.jhu.thrax.datatypes.AlignedSentencePair;
-import edu.jhu.thrax.datatypes.Alignment;
 import edu.jhu.thrax.datatypes.HierarchicalRule;
 import edu.jhu.thrax.datatypes.PhrasePair;
 import edu.jhu.thrax.extraction.HierarchicalRuleExtractor;
@@ -22,18 +20,17 @@ import edu.jhu.thrax.hadoop.datatypes.AlignedRuleWritable;
 import edu.jhu.thrax.hadoop.datatypes.AlignmentWritable;
 import edu.jhu.thrax.hadoop.datatypes.Annotation;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
+import edu.jhu.thrax.input.Alignment;
+import edu.jhu.thrax.input.ThraxInput;
+import edu.jhu.thrax.util.BackwardsCompatibility;
 import edu.jhu.thrax.util.FormatUtils;
 import edu.jhu.thrax.util.Vocabulary;
-import edu.jhu.thrax.util.BackwardsCompatibility;
 import edu.jhu.thrax.util.exceptions.MalformedInputException;
 import edu.jhu.thrax.util.io.InputUtilities;
 
 public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor {
   private Mapper<LongWritable, Text, AlignedRuleWritable, Annotation>.Context context;
 
-  private boolean sourceParsed;
-  private boolean targetParsed;
-  private boolean reverse;
   private boolean sourceLabels;
   private int defaultLabel;
   private int fullSentenceLabel;
@@ -46,28 +43,28 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
       Mapper<LongWritable, Text, AlignedRuleWritable, Annotation>.Context c) {
     context = c;
     Configuration conf = c.getConfiguration();
-    sourceParsed = conf.getBoolean("thrax.source-is-parsed", false);
-    targetParsed = conf.getBoolean("thrax.target-is-parsed", false);
-    reverse = conf.getBoolean("thrax.reverse", false);
+
     // TODO: this configuration key needs a more general name now
     sourceLabels = !conf.getBoolean("thrax.target-is-samt-syntax", true);
     defaultLabel = Vocabulary.id(FormatUtils.markup(conf.get("thrax.default-nt", "X")));
     fullSentenceLabel = Vocabulary.id(FormatUtils.markup(conf.get("thrax.full-sentence-nt", "_S")));
     spanLimit = conf.getInt("thrax.initial-phrase-length", 10);
-		setDefaultLabelPolicy(conf);
+    setDefaultLabelPolicy(conf);
     extractor = getExtractor(conf);
   }
 
-	private void setDefaultLabelPolicy(Configuration conf) {
-		String policy;
-		if (conf.get("thrax.allow-nonlexical-x") != null) {
-			// allow-nonlexical-x was set to some value, so respect that
-			policy = BackwardsCompatibility.defaultLabelPolicy(conf.getBoolean("thrax.allow-nonlexical-x", true));
-		} else {
-			policy = conf.get("thrax.allow-default-nt", "always");
-		}
-		allowDefaultLabel = AllowDefaultLabelPolicy.fromString(policy);
-	}
+  private void setDefaultLabelPolicy(Configuration conf) {
+    String policy;
+    if (conf.get("thrax.allow-nonlexical-x") != null) {
+      // allow-nonlexical-x was set to some value, so respect that
+      policy =
+          BackwardsCompatibility.defaultLabelPolicy(conf.getBoolean("thrax.allow-nonlexical-x",
+              true));
+    } else {
+      policy = conf.get("thrax.allow-default-nt", "always");
+    }
+    allowDefaultLabel = AllowDefaultLabelPolicy.fromString(policy);
+  }
 
   private static HierarchicalRuleExtractor getExtractor(Configuration conf) {
     int arity = conf.getInt("thrax.arity", 2);
@@ -89,32 +86,21 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
         mixed, fullSentence, lexSourceLimit, lexTargetLimit);
   }
 
-  public Iterable<AnnotatedRule> extract(Text line) {
-    AlignedSentencePair sentencePair;
-    try {
-      sentencePair =
-          InputUtilities.alignedSentencePair(line.toString(), sourceParsed, targetParsed, reverse);
-    } catch (MalformedInputException e) {
-      context.getCounter("input errors", e.getMessage()).increment(1);
-      return Collections.<AnnotatedRule>emptyList();
-    }
-    int[] source = sentencePair.source;
-    int[] target = sentencePair.target;
-    Alignment alignment = sentencePair.alignment;
-    List<HierarchicalRule> rules = extractor.extract(source.length, target.length, alignment);
+  public Iterable<AnnotatedRule> extract(ThraxInput input) {
+    List<HierarchicalRule> rules =
+        extractor.extract(input.source.length, input.target.length, input.alignment);
     List<AnnotatedRule> result = new ArrayList<AnnotatedRule>(rules.size());
-    SpanLabeler labeler = getSpanLabeler(line, context.getConfiguration());
+    SpanLabeler labeler = getSpanLabeler(input, context.getConfiguration());
     if (labeler instanceof HieroLabeler) {
       // If this is false, we won't extract any rules, because the LHS label
       // is the default for Hiero.
       allowDefaultLabel = AllowDefaultLabelPolicy.ALWAYS;
     }
     for (HierarchicalRule r : rules) {
-      RuleWritable rule = toRuleWritable(r, labeler, source, target);
+      RuleWritable rule = toRuleWritable(r, labeler, input.source, input.target);
       if (rule != null) {
         result.add(new AnnotatedRule(rule, new AlignmentWritable(r
-            .compactSourceAlignment(alignment)), getRuleAnnotation(r, labeler, source, target,
-            alignment)));
+            .compactSourceAlignment(input.alignment)), getRuleAnnotation(r, labeler, input)));
       }
     }
     return result;
@@ -139,48 +125,42 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
   }
 
   private static Annotation getRuleAnnotation(HierarchicalRule r, SpanLabeler spanLabeler,
-      int[] source, int[] target, Alignment alignment) {
+      ThraxInput input) {
     // TODO: this should be handling extraction-time annotation features.
     return new Annotation(1);
   }
 
-  private SpanLabeler getSpanLabeler(Text line, Configuration conf) {
+  private SpanLabeler getSpanLabeler(ThraxInput input, Configuration conf) {
     String labelType = conf.get("thrax.grammar", "hiero");
     if (labelType.equalsIgnoreCase("hiero")) {
       return new HieroLabeler(defaultLabel);
     } else if (labelType.equalsIgnoreCase("samt")) {
-      String[] fields = FormatUtils.P_DELIM.split(line.toString());
-      if (fields.length < 2) return new HieroLabeler(defaultLabel);
-      String parse = fields[sourceLabels ? 0 : 1].trim();
       boolean constituent = conf.getBoolean("thrax.allow-constituent-label", true);
       boolean ccg = conf.getBoolean("thrax.allow-ccg-label", true);
       boolean concat = conf.getBoolean("thrax.allow-concat-label", true);
       boolean double_concat = conf.getBoolean("thrax.allow-double-plus", true);
       String unary = conf.get("thrax.unary-category-handler", "all");
-      return new SAMTLabeler(parse, constituent, ccg, concat, double_concat, unary, defaultLabel);
+      return new SAMTLabeler((sourceLabels ? input.src_parse : input.tgt_parse), constituent, ccg,
+          concat, double_concat, unary, defaultLabel);
     } else if (labelType.equalsIgnoreCase("manual")) {
-      String[] fields = FormatUtils.P_DELIM.split(line.toString());
-      if (fields.length < 4) return new HieroLabeler(defaultLabel);
-      int[] labels = Vocabulary.addAll(fields[3].trim());
-      return new ManualSpanLabeler(labels, defaultLabel);
+      return new ManualSpanLabeler(input.labels, defaultLabel);
     } else {
       return new HieroLabeler(defaultLabel);
     }
   }
 
   private boolean isValidUseOfDefaultLabel(int lhs, int[] source, int[] target) {
-		if (allowDefaultLabel == AllowDefaultLabelPolicy.ALWAYS) {
-			return true;
-		} else if (allowDefaultLabel == AllowDefaultLabelPolicy.PHRASES) {
+    if (allowDefaultLabel == AllowDefaultLabelPolicy.ALWAYS) {
+      return true;
+    } else if (allowDefaultLabel == AllowDefaultLabelPolicy.PHRASES) {
       if (defaultLabel == lhs && hasNonterminal(source) && hasNonterminal(target))
         return false;
       else
         return !(hasNonterminal(source, defaultLabel) || hasNonterminal(target, defaultLabel));
     } else if (allowDefaultLabel == AllowDefaultLabelPolicy.NEVER) {
-			return lhs != defaultLabel
-				&& !hasNonterminal(source, defaultLabel)
-				&& !hasNonterminal(target, defaultLabel);
-		}
+      return lhs != defaultLabel && !hasNonterminal(source, defaultLabel)
+          && !hasNonterminal(target, defaultLabel);
+    }
     return true;
   }
 
@@ -196,19 +176,19 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
     return false;
   }
 
-	private enum AllowDefaultLabelPolicy {
-		ALWAYS, PHRASES, NEVER;
+  private enum AllowDefaultLabelPolicy {
+    ALWAYS, PHRASES, NEVER;
 
-		public static AllowDefaultLabelPolicy fromString(String s) {
-			if (s.equalsIgnoreCase("always")) {
-				return ALWAYS;
-			} else if (s.equalsIgnoreCase("phrases")) {
-				return PHRASES;
-			} else if (s.equalsIgnoreCase("never")) {
-				return NEVER;
-			} else {
-				return ALWAYS;
-			}
-		}
-	}
+    public static AllowDefaultLabelPolicy fromString(String s) {
+      if (s.equalsIgnoreCase("always")) {
+        return ALWAYS;
+      } else if (s.equalsIgnoreCase("phrases")) {
+        return PHRASES;
+      } else if (s.equalsIgnoreCase("never")) {
+        return NEVER;
+      } else {
+        return ALWAYS;
+      }
+    }
+  }
 }

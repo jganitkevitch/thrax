@@ -1,4 +1,4 @@
-package edu.jhu.thrax.datatypes;
+package edu.jhu.thrax.input;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.jhu.thrax.datatypes.IntPair;
 import edu.jhu.thrax.util.FormatUtils;
 
 public class ArrayAlignment implements Alignment {

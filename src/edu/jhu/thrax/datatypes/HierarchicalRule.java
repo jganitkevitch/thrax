@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import edu.jhu.thrax.extraction.SpanLabeler;
+import edu.jhu.thrax.input.Alignment;
 import edu.jhu.thrax.util.Vocabulary;
 
 public class HierarchicalRule {

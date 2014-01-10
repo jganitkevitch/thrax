@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import edu.jhu.thrax.datatypes.Alignment;
-import edu.jhu.thrax.datatypes.ArrayAlignment;
 import edu.jhu.thrax.datatypes.HierarchicalRule;
 import edu.jhu.thrax.datatypes.PhrasePair;
+import edu.jhu.thrax.input.Alignment;
+import edu.jhu.thrax.input.ArrayAlignment;
 import edu.jhu.thrax.util.FormatUtils;
 import edu.jhu.thrax.util.Vocabulary;
 

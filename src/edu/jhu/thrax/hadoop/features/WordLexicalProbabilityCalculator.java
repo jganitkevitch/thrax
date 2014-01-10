@@ -14,9 +14,10 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import edu.jhu.thrax.datatypes.AlignedSentencePair;
-import edu.jhu.thrax.datatypes.Alignment;
 import edu.jhu.thrax.hadoop.jobs.WordLexprobJob;
+import edu.jhu.thrax.input.Alignment;
+import edu.jhu.thrax.input.ThraxInput;
+import edu.jhu.thrax.input.ThraxInputParser;
 import edu.jhu.thrax.util.Vocabulary;
 import edu.jhu.thrax.util.exceptions.MalformedInputException;
 import edu.jhu.thrax.util.io.InputUtilities;
@@ -27,8 +28,8 @@ public class WordLexicalProbabilityCalculator extends Configured {
 
   public static class Map extends Mapper<LongWritable, Text, LongWritable, IntWritable> {
     private HashMap<Long, Integer> counts = new HashMap<Long, Integer>();
-    private boolean sourceParsed;
-    private boolean targetParsed;
+
+    private ThraxInputParser parser;
     private boolean reverse;
     private boolean sourceGivenTarget;
 
@@ -37,28 +38,26 @@ public class WordLexicalProbabilityCalculator extends Configured {
       String vocabulary_path = conf.getRaw("thrax.work-dir") + "vocabulary/part-*";
       Vocabulary.initialize(conf, vocabulary_path);
 
-      sourceParsed = conf.getBoolean("thrax.source-is-parsed", false);
-      targetParsed = conf.getBoolean("thrax.target-is-parsed", false);
       reverse = conf.getBoolean("thrax.reverse", false);
       sourceGivenTarget = conf.getBoolean(WordLexprobJob.SOURCE_GIVEN_TARGET, false);
+      
+      parser = new ThraxInputParser(conf, !(reverse ^ sourceGivenTarget));
     }
 
     public void map(LongWritable key, Text value, Context context) throws IOException,
         InterruptedException {
       counts.clear();
-      String line = value.toString();
-      AlignedSentencePair sentencePair;
+      ThraxInput input;
       try {
-        sentencePair =
-            InputUtilities.alignedSentencePair(line, sourceParsed, targetParsed,
-                !(reverse ^ sourceGivenTarget));
+        input = parser.parse(value.toString());
       } catch (MalformedInputException e) {
         context.getCounter("input errors", e.getMessage()).increment(1);
         return;
       }
-      int[] source = sentencePair.source;
-      int[] target = sentencePair.target;
-      Alignment alignment = sentencePair.alignment;
+      
+      int[] source = input.source;
+      int[] target = input.target;
+      Alignment alignment = input.alignment;
 
       for (int i = 0; i < source.length; i++) {
         int src = source[i];

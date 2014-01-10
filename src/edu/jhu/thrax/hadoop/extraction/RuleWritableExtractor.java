@@ -1,13 +1,12 @@
 package edu.jhu.thrax.hadoop.extraction;
 
-import org.apache.hadoop.io.Text;
-
 import edu.jhu.thrax.hadoop.datatypes.AlignmentWritable;
 import edu.jhu.thrax.hadoop.datatypes.Annotation;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
+import edu.jhu.thrax.input.ThraxInput;
 
 public interface RuleWritableExtractor {
-  public Iterable<AnnotatedRule> extract(Text line);
+  public Iterable<AnnotatedRule> extract(ThraxInput input);
 }
 
 

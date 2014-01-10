@@ -1,4 +1,4 @@
-package edu.jhu.thrax.datatypes;
+package edu.jhu.thrax.input;
 
 import java.util.Iterator;
 

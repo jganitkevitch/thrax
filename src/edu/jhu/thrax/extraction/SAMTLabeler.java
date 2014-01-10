@@ -18,13 +18,18 @@ public class SAMTLabeler implements SpanLabeler {
 
   public SAMTLabeler(String parse, boolean constituent, boolean ccg, boolean concat,
       boolean doubleConcat, String unary, int def) {
+    this(ParseTree.fromPennFormat(parse), constituent, ccg, concat, doubleConcat, unary, def);
+  }
+
+  public SAMTLabeler(ParseTree parse, boolean constituent, boolean ccg, boolean concat,
+      boolean doubleConcat, String unary, int def) {
     allowConstituent = constituent;
     allowCCG = ccg;
     allowConcat = concat;
     allowDoubleConcat = doubleConcat;
     defaultLabel = def;
     unaryCategoryHandler = UnaryCategoryHandler.fromString(unary);
-    tree = ParseTree.fromPennFormat(parse);
+    tree = parse;
     if (tree == null) System.err.printf("WARNING: SAMT labeler: %s is not a parse tree\n", parse);
   }
 
