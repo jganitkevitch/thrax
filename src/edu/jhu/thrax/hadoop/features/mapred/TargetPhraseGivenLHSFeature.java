@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.io.WritableUtils;
@@ -26,15 +25,15 @@ public class TargetPhraseGivenLHSFeature extends MapReduceFeature {
 
   public static final String NAME = "e_given_lhs";
   public static final String LABEL = "p(e|LHS)";
-  
+
   public String getName() {
     return NAME;
   }
-  
+
   public String getLabel() {
     return LABEL;
   }
-  
+
   public Class<? extends WritableComparator> sortComparatorClass() {
     return Comparator.class;
   }
@@ -51,7 +50,7 @@ public class TargetPhraseGivenLHSFeature extends MapReduceFeature {
     return Reduce.class;
   }
 
-  private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, IntWritable> {
+  private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, FloatWritable> {
     protected void map(RuleWritable key, Annotation value, Context context) throws IOException,
         InterruptedException {
       RuleWritable lhs_marginal = new RuleWritable(key);
@@ -64,7 +63,7 @@ public class TargetPhraseGivenLHSFeature extends MapReduceFeature {
       lhs_target_marginal.source = PrimitiveArrayMarginalComparator.MARGINAL;
       lhs_target_marginal.monotone = false;
 
-      IntWritable count = new IntWritable(value.count());
+      FloatWritable count = new FloatWritable(value.count());
 
       context.write(key, count);
       context.write(lhs_target_marginal, count);
@@ -72,22 +71,23 @@ public class TargetPhraseGivenLHSFeature extends MapReduceFeature {
     }
   }
 
-  private static class Reduce extends Reducer<RuleWritable, IntWritable, RuleWritable, FeaturePair> {
-    private int marginal;
+  private static class Reduce
+      extends Reducer<RuleWritable, FloatWritable, RuleWritable, FeaturePair> {
+    private float marginal;
     private FloatWritable prob;
-    
+
     protected void setup(Context context) throws IOException, InterruptedException {
       Configuration conf = context.getConfiguration();
       String vocabulary_path = conf.getRaw("thrax.work-dir") + "vocabulary/part-*";
       Vocabulary.initialize(conf, vocabulary_path);
     }
 
-    protected void reduce(RuleWritable key, Iterable<IntWritable> values, Context context)
+    protected void reduce(RuleWritable key, Iterable<FloatWritable> values, Context context)
         throws IOException, InterruptedException {
       if (Arrays.equals(key.target, PrimitiveArrayMarginalComparator.MARGINAL)) {
         // we only get here if it is the very first time we saw the LHS
         marginal = 0;
-        for (IntWritable x : values)
+        for (FloatWritable x : values)
           marginal += x.get();
         return;
       }
@@ -95,10 +95,10 @@ public class TargetPhraseGivenLHSFeature extends MapReduceFeature {
       // control only gets here if we are using the same marginal
       if (Arrays.equals(key.source, PrimitiveArrayMarginalComparator.MARGINAL)) {
         // we only get in here if it's a new source side
-        int count = 0;
-        for (IntWritable x : values)
+        float count = 0;
+        for (FloatWritable x : values)
           count += x.get();
-        prob = new FloatWritable((float) -Math.log(count / (float) marginal));
+        prob = new FloatWritable((float) -Math.log(count / marginal));
         return;
       }
       context.write(key, new FeaturePair(Vocabulary.id(LABEL), prob));

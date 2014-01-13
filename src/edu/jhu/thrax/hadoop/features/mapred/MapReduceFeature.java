@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Job;
@@ -18,7 +18,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 
 import edu.jhu.thrax.hadoop.datatypes.FeaturePair;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
@@ -34,7 +33,7 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
   }
 
   public Class<? extends Reducer> combinerClass() {
-    return IntSumReducer.class;
+    return FloatSumReducer.class;
   }
 
   public abstract Class<? extends Mapper> mapperClass();
@@ -83,7 +82,7 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
   
   protected void setMapOutputFormat(Job job) {
     job.setMapOutputKeyClass(RuleWritable.class);
-    job.setMapOutputValueClass(IntWritable.class);
+    job.setMapOutputValueClass(FloatWritable.class);
   }
 
 }

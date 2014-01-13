@@ -4,6 +4,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 
@@ -14,43 +16,52 @@ public class Annotation implements Writable {
 
   // Rule occurrence count.
   private int count;
-  
-  private FeatureMap map;
+  // Fractional occurrence count.
+  private float fractional;
 
   public Annotation() {
     count = 0;
-    map = new FeatureMap();
+    fractional = 0;
   }
 
   public Annotation(int c) {
     count = c;
-    map = new FeatureMap();
+    fractional = 0;
+  }
+  
+  public Annotation(float f) {
+    count = 1;
+    fractional = f;
   }
 
   public Annotation(Annotation a) {
     count = a.count;
+    fractional = a.fractional;
     this.f2e = new AlignmentWritable(a.f2e);
-    map = new FeatureMap(a.map);
   }
   
   public Annotation(AlignmentWritable f2e) {
     count = 1;
+    fractional = 0;
     this.f2e = f2e;
   }
 
   public void merge(Annotation that) {
     this.count += that.count;
+    this.fractional += that.fractional;
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    boolean has_alignments = false;
+    FloatWritable f = new FloatWritable();
+    f.readFields(in);
+    fractional = f.get();
+    
     count = WritableUtils.readVInt(in);
-    if (count < 0) {
-      count = -count;
-      has_alignments = true;
-    }
-    if (has_alignments) {
+    
+    BooleanWritable b = new BooleanWritable();
+    b.readFields(in);
+    if (b.get()) {
       f2e = new AlignmentWritable();
       f2e.readFields(in);
     }
@@ -58,8 +69,13 @@ public class Annotation implements Writable {
 
   @Override
   public void write(DataOutput out) throws IOException {
-    WritableUtils.writeVInt(out, (f2e != null ? -count : count));
-    if (f2e != null) f2e.write(out);
+    FloatWritable f = new FloatWritable(fractional);
+    f.write(out);
+    WritableUtils.writeVInt(out, count);
+    BooleanWritable b = new BooleanWritable(f2e != null);
+    b.write(out);
+    if (f2e != null)
+      f2e.write(out);
   }
 
   public AlignmentWritable e2f() {
@@ -74,7 +90,13 @@ public class Annotation implements Writable {
     f2e = a;
   }
 
-  public int count() {
-    return count;
+  public float count() {
+    if (fractional == 0)
+      return count;
+    return fractional;
+  }
+  
+  public void setFractional(float f) {
+    this.fractional = f;
   }
 }

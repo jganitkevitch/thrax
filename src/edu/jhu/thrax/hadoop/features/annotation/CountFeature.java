@@ -3,6 +3,7 @@ package edu.jhu.thrax.hadoop.features.annotation;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Reducer.Context;
@@ -38,7 +39,7 @@ public class CountFeature implements AnnotationFeature {
 
   @Override
   public Writable score(RuleWritable r, Annotation annotation) {
-    return new IntWritable(annotation.count());
+    return new FloatWritable(annotation.count());
   }
 
   @Override

@@ -36,12 +36,10 @@ public class FeatureMap implements Writable {
 
   public void put(int key, FeatureValue val) {
     map.put(key, val);
-    System.err.println("PUT:  " + Vocabulary.word(key) + " = " + val.get().getClass().getName());
   }
 
   public void put(String key, FeatureValue val) {
     map.put(Vocabulary.id(key), val);
-    System.err.println("READ:  " + key + " = " + val.get().getClass().getName());
   }
 
   public boolean containsKey(int key) {
@@ -62,8 +60,6 @@ public class FeatureMap implements Writable {
       key = WritableUtils.readVInt(in);
       val.readFields(in);
       map.put(key, val);
-
-      System.err.println("READ:  " + Vocabulary.word(key) + " = " + val.get().getClass().getName());
     }
   }
 
@@ -73,9 +69,6 @@ public class FeatureMap implements Writable {
     for (int key : map.keySet()) {
       WritableUtils.writeVInt(out, key);
       map.get(key).write(out);
-
-      System.err.println("WRITE: " + Vocabulary.word(key) + " = "
-          + map.get(key).get().getClass().getName());
     }
   }
 }

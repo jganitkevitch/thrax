@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.io.WritableUtils;
@@ -51,7 +50,7 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
     return Reduce.class;
   }
 
-  private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, IntWritable> {
+  private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, FloatWritable> {
 
     protected void setup(Context context) throws IOException, InterruptedException {
       Configuration conf = context.getConfiguration();
@@ -70,7 +69,7 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
       RuleWritable source_target_marginal = new RuleWritable(key);
       source_target_marginal.lhs = PrimitiveUtils.MARGINAL_ID;
 
-      IntWritable count = new IntWritable(value.count());
+      FloatWritable count = new FloatWritable(value.count());
 
       context.write(source_marginal, count);
       context.write(source_target_marginal, count);
@@ -78,8 +77,8 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
     }
   }
 
-  private static class Reduce extends Reducer<RuleWritable, IntWritable, RuleWritable, FeaturePair> {
-    private int marginal;
+  private static class Reduce extends Reducer<RuleWritable, FloatWritable, RuleWritable, FeaturePair> {
+    private float marginal;
     private FloatWritable prob;
 
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -88,19 +87,19 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
       Vocabulary.initialize(conf, vocabulary_path);
     }
 
-    protected void reduce(RuleWritable key, Iterable<IntWritable> values, Context context)
+    protected void reduce(RuleWritable key, Iterable<FloatWritable> values, Context context)
         throws IOException, InterruptedException {
       if (Arrays.equals(key.target, PrimitiveArrayMarginalComparator.MARGINAL)) {
         marginal = 0;
-        for (IntWritable x : values)
+        for (FloatWritable x : values)
           marginal += x.get();
         return;
       }
       if (key.lhs == PrimitiveUtils.MARGINAL_ID) {
-        int count = 0;
-        for (IntWritable x : values)
+        float count = 0;
+        for (FloatWritable x : values)
           count += x.get();
-        prob = new FloatWritable((float) -Math.log(count / (float) marginal));
+        prob = new FloatWritable((float) -Math.log(count / marginal));
         return;
       }
       context.write(key, new FeaturePair(Vocabulary.id(LABEL), prob));

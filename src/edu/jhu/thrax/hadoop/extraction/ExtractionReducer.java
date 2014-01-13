@@ -17,7 +17,7 @@ public class ExtractionReducer
   private RuleWritable currentRule = null;
   private Annotation currentAnnotation = null;
   private AlignmentWritable maxAlignment = null;
-  private int alignmentCount;
+  private float alignmentCount;
 
   private int minCount;
 
@@ -32,7 +32,7 @@ public class ExtractionReducer
       throws IOException, InterruptedException {
     RuleWritable rule = key.getRule();
     AlignmentWritable alignment = key.getAlignment();
-
+    
     Annotation merged = new Annotation();
     for (Annotation a : values)
       merged.merge(a);

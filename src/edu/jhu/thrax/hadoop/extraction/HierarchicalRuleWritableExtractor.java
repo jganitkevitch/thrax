@@ -1,7 +1,6 @@
 package edu.jhu.thrax.hadoop.extraction;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -20,13 +19,12 @@ import edu.jhu.thrax.hadoop.datatypes.AlignedRuleWritable;
 import edu.jhu.thrax.hadoop.datatypes.AlignmentWritable;
 import edu.jhu.thrax.hadoop.datatypes.Annotation;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
-import edu.jhu.thrax.input.Alignment;
+import edu.jhu.thrax.hadoop.features.context.ContextFeature;
+import edu.jhu.thrax.hadoop.features.context.ContextFeatureFactory;
 import edu.jhu.thrax.input.ThraxInput;
 import edu.jhu.thrax.util.BackwardsCompatibility;
 import edu.jhu.thrax.util.FormatUtils;
 import edu.jhu.thrax.util.Vocabulary;
-import edu.jhu.thrax.util.exceptions.MalformedInputException;
-import edu.jhu.thrax.util.io.InputUtilities;
 
 public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor {
   private Mapper<LongWritable, Text, AlignedRuleWritable, Annotation>.Context context;
@@ -36,6 +34,8 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
   private int fullSentenceLabel;
   private int spanLimit;
   private AllowDefaultLabelPolicy allowDefaultLabel;
+
+  private List<ContextFeature> contextFeatures;
 
   private HierarchicalRuleExtractor extractor;
 
@@ -51,6 +51,9 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
     spanLimit = conf.getInt("thrax.initial-phrase-length", 10);
     setDefaultLabelPolicy(conf);
     extractor = getExtractor(conf);
+
+    String features = BackwardsCompatibility.equivalent(conf.get("thrax.features", ""));
+    contextFeatures = ContextFeatureFactory.getAll(features);
   }
 
   private void setDefaultLabelPolicy(Configuration conf) {
@@ -124,10 +127,13 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
     return rw;
   }
 
-  private static Annotation getRuleAnnotation(HierarchicalRule r, SpanLabeler spanLabeler,
-      ThraxInput input) {
-    // TODO: this should be handling extraction-time annotation features.
-    return new Annotation(1);
+  private Annotation getRuleAnnotation(HierarchicalRule r, SpanLabeler spanLabeler, ThraxInput input) {
+    Annotation a = new Annotation();
+
+    for (ContextFeature f : contextFeatures)
+      f.addScore(a, r, spanLabeler, input);
+
+    return a;
   }
 
   private SpanLabeler getSpanLabeler(ThraxInput input, Configuration conf) {

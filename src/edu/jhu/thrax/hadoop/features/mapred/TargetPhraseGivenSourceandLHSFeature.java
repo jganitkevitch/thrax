@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.io.WritableUtils;
@@ -26,15 +25,15 @@ public class TargetPhraseGivenSourceandLHSFeature extends MapReduceFeature {
 
   public static final String NAME = "e_given_f_and_lhs";
   public static final String LABEL = "p(e|f,LHS)";
-  
+
   public String getName() {
     return NAME;
   }
-  
+
   public String getLabel() {
     return LABEL;
   }
-  
+
   public Class<? extends WritableComparator> sortComparatorClass() {
     return Comparator.class;
   }
@@ -51,23 +50,23 @@ public class TargetPhraseGivenSourceandLHSFeature extends MapReduceFeature {
     return Reduce.class;
   }
 
-  private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, IntWritable> {
+  private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, FloatWritable> {
     protected void map(RuleWritable key, Annotation value, Context context) throws IOException,
         InterruptedException {
       RuleWritable lhs_source_marginal = new RuleWritable(key);
       lhs_source_marginal.target = PrimitiveArrayMarginalComparator.MARGINAL;
       lhs_source_marginal.monotone = false;
 
-      IntWritable count = new IntWritable(value.count());
+      FloatWritable count = new FloatWritable(value.count());
 
       context.write(key, count);
       context.write(lhs_source_marginal, count);
     }
   }
 
-  private static class Reduce extends Reducer<RuleWritable, IntWritable, RuleWritable, FeaturePair> {
+  private static class Reduce extends Reducer<RuleWritable, FloatWritable, RuleWritable, FeaturePair> {
 
-    private int marginal;
+    private float marginal;
 
     protected void setup(Context context) throws IOException, InterruptedException {
       Configuration conf = context.getConfiguration();
@@ -75,23 +74,23 @@ public class TargetPhraseGivenSourceandLHSFeature extends MapReduceFeature {
       Vocabulary.initialize(conf, vocabulary_path);
     }
 
-    protected void reduce(RuleWritable key, Iterable<IntWritable> values, Context context)
+    protected void reduce(RuleWritable key, Iterable<FloatWritable> values, Context context)
         throws IOException, InterruptedException {
       if (Arrays.equals(key.target, PrimitiveArrayMarginalComparator.MARGINAL)) {
         // we only get here if it is the very first time we saw the LHS
         // and source combination
         marginal = 0;
-        for (IntWritable x : values)
+        for (FloatWritable x : values)
           marginal += x.get();
         return;
       }
 
       // control only gets here if we are using the same marginal
-      int count = 0;
-      for (IntWritable x : values)
+      float count = 0;
+      for (FloatWritable x : values)
         count += x.get();
 
-      FloatWritable prob = new FloatWritable((float) -Math.log(count / (float) marginal));
+      FloatWritable prob = new FloatWritable((float) -Math.log(count / marginal));
       context.write(key, new FeaturePair(Vocabulary.id(LABEL), prob));
     }
 
@@ -130,8 +129,8 @@ public class TargetPhraseGivenSourceandLHSFeature extends MapReduceFeature {
     }
   }
 
-  public static class SourceandLHSPartitioner extends Partitioner<RuleWritable, IntWritable> {
-    public int getPartition(RuleWritable key, IntWritable value, int numPartitions) {
+  public static class SourceandLHSPartitioner extends Partitioner<RuleWritable, FloatWritable> {
+    public int getPartition(RuleWritable key, FloatWritable value, int numPartitions) {
       int hash = 163;
       hash = 37 * hash + key.lhs;
       hash = 37 * hash + Arrays.hashCode(key.source);
