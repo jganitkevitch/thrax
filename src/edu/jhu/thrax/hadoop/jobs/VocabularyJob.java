@@ -19,9 +19,9 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 
-import edu.jhu.thrax.extraction.Labeling;
-import edu.jhu.thrax.util.FormatUtils;
+import edu.jhu.thrax.input.ThraxInputParser;
 import edu.jhu.thrax.util.Vocabulary;
+import edu.jhu.thrax.util.exceptions.MalformedInputException;
 
 public class VocabularyJob implements ThraxJob {
 
@@ -68,117 +68,41 @@ public class VocabularyJob implements ThraxJob {
 
   private static class Map extends Mapper<LongWritable, Text, Text, NullWritable> {
 
-    private boolean sourceParsed;
-    private boolean targetParsed;
-    private Labeling labeling;
-
     private boolean allowConstituent = true;
     private boolean allowCCG = true;
     private boolean allowConcat = true;
     private boolean allowDoubleConcat = true;
+    
+    private ThraxInputParser parser;
 
     protected void setup(Context context) {
       Configuration conf = context.getConfiguration();
-      sourceParsed = conf.getBoolean("thrax.source-is-parsed", false);
-      targetParsed = conf.getBoolean("thrax.target-is-parsed", false);
-
+      
       allowConstituent = conf.getBoolean("thrax.allow-constituent-label", true);
       allowCCG = conf.getBoolean("thrax.allow-ccg-label", true);
       allowConcat = conf.getBoolean("thrax.allow-concat-label", true);
       allowDoubleConcat = conf.getBoolean("thrax.allow-double-plus", true);
 
-      if (conf.get("thrax.grammar", "hiero").equalsIgnoreCase("samt")) {
-        labeling = Labeling.SYNTAX;
-      } else if (conf.get("thrax.grammar", "hiero").equalsIgnoreCase("manual")) {
-        labeling = Labeling.MANUAL;
-      } else {
-        labeling = Labeling.HIERO;
-      }
+      parser = new ThraxInputParser(conf);
     }
 
-    protected void map(LongWritable key, Text input, Context context) throws IOException,
+    protected void map(LongWritable key, Text line, Context context) throws IOException,
         InterruptedException {
-
-      String[] parts = FormatUtils.P_DELIM.split(input.toString());
-      if (parts.length < 3) return;
-
-      if (sourceParsed)
-        extractTokensFromParsed(parts[0], (labeling != Labeling.SYNTAX), context);
-      else
-        extractTokens(parts[0], context);
-
-      if (targetParsed)
-        extractTokensFromParsed(parts[1], (labeling != Labeling.SYNTAX), context);
-      else
-        extractTokens(parts[1], context);
-
-      if (labeling == Labeling.MANUAL && parts.length > 3) {
-        String[] labels = FormatUtils.P_SPACE.split(parts[3].trim());
-        for (String label : labels)
-          context.write(new Text("[" + label), NullWritable.get());
-      }
-    }
-
-    protected void extractTokens(String input, Context context) throws IOException,
-        InterruptedException {
-      if (input == null || input.isEmpty()) return;
-      String[] tokens = FormatUtils.P_SPACE.split(input);
-      for (String token : tokens)
-        if (!token.isEmpty()) context.write(new Text(token), NullWritable.get());
-    }
-
-    protected void extractTokensFromParsed(String input, boolean terminals_only, Context context)
-        throws IOException, InterruptedException {
-      int from = 0, to = 0;
-      boolean seeking = true;
-      boolean nonterminal = false;
-      char current;
-
-      Set<String> nonterminals = new HashSet<String>();
-
-      if (input == null || input.isEmpty() || input.charAt(0) != '(') return;
-
-      // Run through entire (potentially parsed) sentence.
-      while (from < input.length() && to < input.length()) {
-        if (seeking) {
-          // Seeking mode: looking for the start of the next symbol.
-          current = input.charAt(from);
-          if (current == '(' || current == ')' || current == ' ') {
-            // We skip brackets and spaces.
-            ++from;
-          } else {
-            // Found a non spacing symbol, go into word filling mode.
-            to = from + 1;
-            seeking = false;
-            nonterminal = (input.charAt(from - 1) == '(');
-          }
-        } else {
-          // Word filling mode. Advance to until we hit the end or spacing.
-          current = input.charAt(to);
-          if (current == ' ' || current == ')' || current == '(') {
-            // Word ended.
-            if (terminals_only) {
-              if (!nonterminal)
-                context.write(new Text(input.substring(from, to)), NullWritable.get());
-            } else {
-              if (nonterminal) {
-                String nt = input.substring(from, to);
-                if (nt.equals(",")) nt = "COMMA";
-                nonterminals.add("[" + nt);
-              } else {
-                context.write(new Text(input.substring(from, to)), NullWritable.get());
-              }
-            }
-            from = to + 1;
-            seeking = true;
-          } else {
-            ++to;
-          }
+      try {
+        Vocabulary.clear();
+        
+        parser.parse(line.toString());
+        
+        Set<String> nonterminals = new HashSet<String>();
+        for (int i = 1; i < Vocabulary.size(); ++i) {
+          if (Vocabulary.nt(i))
+            context.write(new Text(Vocabulary.word(i)), NullWritable.get());
+          else
+            nonterminals.add(Vocabulary.word(i));
         }
-      }
-      if (!terminals_only) combineNonterminals(context, nonterminals);
+        combineNonterminals(context, nonterminals);
+      } catch (MalformedInputException e) {}
     }
-
 
     private void combineNonterminals(Context context, Set<String> nonterminals) throws IOException,
         InterruptedException {
@@ -213,7 +137,6 @@ public class VocabularyJob implements ThraxJob {
       for (String nt : nts)
         context.write(new Text(nt + "]"), NullWritable.get());
     }
-
   }
 
   public static class VocabularyPartitioner extends Partitioner<Text, Writable> {
@@ -238,7 +161,7 @@ public class VocabularyJob implements ThraxJob {
     protected void setup(Context context) throws IOException, InterruptedException {
       numReducers = context.getNumReduceTasks();
       reducerNumber = context.getTaskAttemptID().getTaskID().getId();
-      
+
       Vocabulary.initialize(context.getConfiguration());
     }
 

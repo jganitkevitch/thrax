@@ -138,7 +138,10 @@ public class ThraxInputParser {
 
     LABELS("labels", "labels") {
       public void fill(ThraxInput in, String name, String field) {
-        in.labels = Vocabulary.addAll(field);
+        String[] labels = FormatUtils.P_SPACE.split(field);
+        in.labels = new int[labels.length];
+        for (int i = 0; i < labels.length; ++i)
+          in.labels[i] = Vocabulary.id(FormatUtils.markup(labels[i]));
       }
     };
 
@@ -149,7 +152,7 @@ public class ThraxInputParser {
       this.keyword = keyword;
       this.flipside = flipside;
     }
-    
+
     private Format flip() {
       return get(this.flipside);
     }

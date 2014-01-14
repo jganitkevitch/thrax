@@ -308,7 +308,7 @@ public class Vocabulary {
     return FormatUtils.getNonterminalIndex(word(id));
   }
 
-  private static void clear() {
+  public static void clear() {
     stringToId = new TreeMap<String, Integer>();
     idToString = new ArrayList<String>();
 
