@@ -82,7 +82,7 @@ public class ThraxInputParser {
 
     TGT_PARSE("tgt_parse", "src_parse") {
       public void fill(ThraxInput in, String name, String field) throws MalformedInputException {
-        in.src_parse = ParseTree.fromPennFormat(field);
+        in.tgt_parse = ParseTree.fromPennFormat(field);
         in.target = InputUtilities.parseYield(field);
       }
     },

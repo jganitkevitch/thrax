@@ -199,7 +199,7 @@ public class ParseTree {
 
     public String toString() {
       if (isLeaf()) return Vocabulary.word(label());
-      String result = String.format("(%s", label());
+      String result = String.format("(%s", Vocabulary.word(label()));
       Iterator<Node> children = children();
       while (children.hasNext())
         result += " " + children.next().toString();

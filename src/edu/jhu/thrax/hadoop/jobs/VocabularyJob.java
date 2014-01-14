@@ -72,12 +72,12 @@ public class VocabularyJob implements ThraxJob {
     private boolean allowCCG = true;
     private boolean allowConcat = true;
     private boolean allowDoubleConcat = true;
-    
+
     private ThraxInputParser parser;
 
     protected void setup(Context context) {
       Configuration conf = context.getConfiguration();
-      
+
       allowConstituent = conf.getBoolean("thrax.allow-constituent-label", true);
       allowCCG = conf.getBoolean("thrax.allow-ccg-label", true);
       allowConcat = conf.getBoolean("thrax.allow-concat-label", true);
@@ -90,15 +90,16 @@ public class VocabularyJob implements ThraxJob {
         InterruptedException {
       try {
         Vocabulary.clear();
-        
+
         parser.parse(line.toString());
-        
+
         Set<String> nonterminals = new HashSet<String>();
         for (int i = 1; i < Vocabulary.size(); ++i) {
-          if (Vocabulary.nt(i))
-            context.write(new Text(Vocabulary.word(i)), NullWritable.get());
+          String word = Vocabulary.word(i);
+          if (!Vocabulary.nt(word))
+            context.write(new Text(word), NullWritable.get());
           else
-            nonterminals.add(Vocabulary.word(i));
+            nonterminals.add(word.substring(0, word.length() - 1));
         }
         combineNonterminals(context, nonterminals);
       } catch (MalformedInputException e) {}
