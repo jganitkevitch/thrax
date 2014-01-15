@@ -128,7 +128,7 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
   }
 
   private Annotation getRuleAnnotation(HierarchicalRule r, SpanLabeler spanLabeler, ThraxInput input) {
-    Annotation a = new Annotation();
+    Annotation a = new Annotation(1);
 
     for (ContextFeature f : contextFeatures)
       f.addScore(a, r, spanLabeler, input);

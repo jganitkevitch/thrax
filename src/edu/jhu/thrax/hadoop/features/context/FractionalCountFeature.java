@@ -48,7 +48,7 @@ public class FractionalCountFeature implements ContextFeature {
   public void addScore(Annotation annotation, HierarchicalRule r, SpanLabeler spanLabeler,
       ThraxInput input) {
     if (input.weights != null && input.weights.length > 0)
-      annotation.setFractional(input.weights[0]);
+      annotation.setCount(input.weights[0]);
   }
 
 }

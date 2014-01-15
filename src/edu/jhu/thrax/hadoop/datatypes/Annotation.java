@@ -7,7 +7,6 @@ import java.io.IOException;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableUtils;
 
 public class Annotation implements Writable {
 
@@ -15,49 +14,40 @@ public class Annotation implements Writable {
   private AlignmentWritable f2e = null;
 
   // Rule occurrence count.
-  private int count;
-  // Fractional occurrence count.
-  private float fractional;
-
-  public Annotation() {
-    count = 0;
-    fractional = 0;
-  }
+  private float count;
 
   public Annotation(int c) {
-    count = c;
-    fractional = 0;
+    count = (float) c;
   }
   
-  public Annotation(float f) {
-    count = 1;
-    fractional = f;
+  public Annotation(float c) {
+    count = c;
   }
 
   public Annotation(Annotation a) {
     count = a.count;
-    fractional = a.fractional;
     this.f2e = new AlignmentWritable(a.f2e);
   }
   
-  public Annotation(AlignmentWritable f2e) {
-    count = 1;
-    fractional = 0;
+  public Annotation(int c, AlignmentWritable f2e) {
+    count = (float) c;
+    this.f2e = f2e;
+  }
+  
+  public Annotation(float c, AlignmentWritable f2e) {
+    count = c;
     this.f2e = f2e;
   }
 
   public void merge(Annotation that) {
     this.count += that.count;
-    this.fractional += that.fractional;
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
     FloatWritable f = new FloatWritable();
     f.readFields(in);
-    fractional = f.get();
-    
-    count = WritableUtils.readVInt(in);
+    count = f.get();
     
     BooleanWritable b = new BooleanWritable();
     b.readFields(in);
@@ -69,9 +59,8 @@ public class Annotation implements Writable {
 
   @Override
   public void write(DataOutput out) throws IOException {
-    FloatWritable f = new FloatWritable(fractional);
+    FloatWritable f = new FloatWritable(count);
     f.write(out);
-    WritableUtils.writeVInt(out, count);
     BooleanWritable b = new BooleanWritable(f2e != null);
     b.write(out);
     if (f2e != null)
@@ -91,12 +80,10 @@ public class Annotation implements Writable {
   }
 
   public float count() {
-    if (fractional == 0)
-      return count;
-    return fractional;
+    return count;
   }
   
-  public void setFractional(float f) {
-    this.fractional = f;
+  public void setCount(float c) {
+    this.count = c;
   }
 }

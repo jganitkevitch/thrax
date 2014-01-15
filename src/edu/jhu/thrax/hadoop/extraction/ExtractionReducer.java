@@ -33,7 +33,7 @@ public class ExtractionReducer
     RuleWritable rule = key.getRule();
     AlignmentWritable alignment = key.getAlignment();
     
-    Annotation merged = new Annotation();
+    Annotation merged = new Annotation(0);
     for (Annotation a : values)
       merged.merge(a);
 
@@ -45,7 +45,7 @@ public class ExtractionReducer
         context.progress();
       }
       currentRule = new RuleWritable(rule);
-      currentAnnotation = new Annotation();
+      currentAnnotation = new Annotation(0);
       alignmentCount = 0;
       maxAlignment = null;
     }

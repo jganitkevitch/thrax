@@ -12,7 +12,7 @@ public class ExtractionCombiner extends Reducer<AlignedRuleWritable, Annotation,
   protected void reduce(AlignedRuleWritable key, Iterable<Annotation> values, Context context)
       throws IOException, InterruptedException {
     context.progress();
-    Annotation merged = new Annotation();
+    Annotation merged = new Annotation(0);
     for (Annotation a : values) merged.merge(a);
     context.write(key, merged);
   }
