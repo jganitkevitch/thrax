@@ -27,7 +27,19 @@ import edu.jhu.thrax.hadoop.jobs.ThraxJob;
 
 @SuppressWarnings("rawtypes")
 public abstract class MapReduceFeature implements Feature, ThraxJob {
-  
+
+  protected static HashSet<Class<? extends ThraxJob>> prereqs =
+      new HashSet<Class<? extends ThraxJob>>();
+
+  public Set<Class<? extends ThraxJob>> getPrerequisites() {
+    prereqs.add(ExtractionJob.class);
+    return prereqs;
+  }
+
+  public static void addPrerequisite(Class<? extends ThraxJob> c) {
+    prereqs.add(c);
+  }
+
   public String getOutputSuffix() {
     return getName();
   }
@@ -61,7 +73,7 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
     job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
     setMapOutputFormat(job);
-    
+
     int num_reducers = conf.getInt("thrax.reducers", 4);
     job.setNumReduceTasks(num_reducers);
 
@@ -70,16 +82,10 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
     return job;
   }
 
-  public Set<Class<? extends ThraxJob>> getPrerequisites() {
-    Set<Class<? extends ThraxJob>> result = new HashSet<Class<? extends ThraxJob>>();
-    result.add(ExtractionJob.class);
-    return result;
-  }
-
   public abstract void unaryGlueRuleScore(int nt, Map<Integer, Writable> map);
 
   public abstract void binaryGlueRuleScore(int nt, Map<Integer, Writable> map);
-  
+
   protected void setMapOutputFormat(Job job) {
     job.setMapOutputKeyClass(RuleWritable.class);
     job.setMapOutputValueClass(FloatWritable.class);

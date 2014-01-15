@@ -112,7 +112,7 @@ public class Vocabulary {
       // Add feature names.
       String type = conf.get("thrax.type", "translation");
       String features = BackwardsCompatibility.equivalent(conf.get("thrax.features", ""));
-      if ("translation".equals(type)) {
+      if ("translation".equals(type) || "count-pivot".equals(type)) {
         for (MapReduceFeature f : MapReduceFeatureFactory.getAll(features))
           id(f.getLabel());
       } else if ("paraphrasing".equals(type)) {

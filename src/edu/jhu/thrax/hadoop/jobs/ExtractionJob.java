@@ -36,7 +36,7 @@ public class ExtractionJob implements ThraxJob {
 
     job.setSortComparatorClass(AlignedRuleWritable.RuleYieldComparator.class);
     job.setPartitionerClass(AlignedRuleWritable.RuleYieldPartitioner.class);
-    
+
     job.setMapOutputKeyClass(AlignedRuleWritable.class);
     job.setMapOutputValueClass(Annotation.class);
     job.setOutputKeyClass(RuleWritable.class);
@@ -51,7 +51,13 @@ public class ExtractionJob implements ThraxJob {
     int maxSplitSize = conf.getInt("thrax.max-split-size", 0);
     if (maxSplitSize != 0) FileInputFormat.setMaxInputSplitSize(job, maxSplitSize);
 
-    FileOutputFormat.setOutputPath(job, new Path(conf.get("thrax.work-dir") + "rules"));
+    String type = conf.get("thrax.type", "translation");
+    if (type.equals("count-pivot")) {
+      FileOutputFormat.setOutputPath(job,
+          new Path(conf.get("thrax.work-dir") + "translation-rules"));
+    } else {
+      FileOutputFormat.setOutputPath(job, new Path(conf.get("thrax.work-dir") + "rules"));
+    }
 
     return job;
   }

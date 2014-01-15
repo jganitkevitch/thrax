@@ -27,6 +27,7 @@ import edu.jhu.thrax.hadoop.jobs.FeatureCollectionJob;
 import edu.jhu.thrax.hadoop.jobs.JobState;
 import edu.jhu.thrax.hadoop.jobs.OutputJob;
 import edu.jhu.thrax.hadoop.jobs.ParaphraseAggregationJob;
+import edu.jhu.thrax.hadoop.jobs.ParaphraseCountAggregationJob;
 import edu.jhu.thrax.hadoop.jobs.ParaphrasePivotingJob;
 import edu.jhu.thrax.hadoop.jobs.Scheduler;
 import edu.jhu.thrax.hadoop.jobs.SchedulerException;
@@ -119,6 +120,32 @@ public class Thrax extends Configured implements Tool {
 
       scheduler.percolate(OutputJob.class);
 
+      // Early pivoting with virtual counts.
+    } else if ("count-pivot".equals(type)) {
+      // Schedule rule extraction job.
+      scheduler.schedule(ExtractionJob.class);
+      scheduler.schedule(ParaphraseCountAggregationJob.class);
+      
+      MapReduceFeature.addPrerequisite(ParaphraseCountAggregationJob.class);
+      AnnotationFeatureJob.addPrerequisite(ParaphraseCountAggregationJob.class);
+      
+      // Create feature map-reduces.
+      for (MapReduceFeature f : MapReduceFeatureFactory.getAll(features)) {
+        scheduler.schedule(f.getClass());
+        OutputJob.addPrerequisite(f.getClass());
+      }
+      // Set up annotation-level feature & prerequisites.
+      List<AnnotationFeature> annotation_features = AnnotationFeatureFactory.getAll(features);
+      for (AnnotationFeature f : annotation_features)
+        AnnotationFeatureJob.addPrerequisites(f.getPrerequisites());
+
+      if (!annotation_features.isEmpty()) {
+        scheduler.schedule(AnnotationFeatureJob.class);
+        OutputJob.addPrerequisite(AnnotationFeatureJob.class);
+      }
+      scheduler.schedule(OutputJob.class);
+      scheduler.percolate(OutputJob.class);
+      
       // Paraphrase grammar mode.
     } else if ("paraphrasing".equals(type)) {
       // Schedule rule extraction job.
@@ -156,7 +183,7 @@ public class Thrax extends Configured implements Tool {
       // Schedule aggregation and output job.
       scheduler.schedule(ParaphraseAggregationJob.class);
       scheduler.percolate(ParaphraseAggregationJob.class);
-      
+
     } else if ("distributional".equals(type)) {
       scheduler.schedule(DistributionalContextExtractionJob.class);
       scheduler.schedule(DistributionalContextSortingJob.class);
