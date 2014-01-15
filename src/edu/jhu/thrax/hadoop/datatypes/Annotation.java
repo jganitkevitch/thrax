@@ -16,6 +16,10 @@ public class Annotation implements Writable {
   // Rule occurrence count.
   private float count;
 
+  public Annotation() {
+    count = 0;
+  }
+  
   public Annotation(int c) {
     count = (float) c;
   }
