@@ -38,7 +38,7 @@ public class RarityPenaltyFeature implements AnnotationFeature {
 
   @Override
   public Writable score(RuleWritable r, Annotation annotation) {
-    return new FloatWritable((float) Math.exp(1 - annotation.count()));
+    return new FloatWritable((float) Math.exp(1 - annotation.support()));
   }
 
   @Override

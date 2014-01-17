@@ -37,7 +37,8 @@ public class PivotedAnnotationFeature implements PivotedFeature {
     AlignmentWritable src_f2e = ((AlignmentWritable) src.get(AlignmentFeature.LABEL));
     AlignmentWritable tgt_f2e = ((AlignmentWritable) tgt.get(AlignmentFeature.LABEL));
 
-    return new Annotation(1, src_f2e.join(tgt_f2e));
+    // TODO: Properly transport count and support.
+    return new Annotation(1, 1, src_f2e.join(tgt_f2e));
   }
 
   public void unaryGlueRuleScore(int nt, Map<Integer, Writable> map) {}

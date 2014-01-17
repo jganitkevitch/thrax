@@ -19,33 +19,38 @@ public class ExtractionReducer
   private AlignmentWritable maxAlignment = null;
   private float alignmentCount;
 
+  private boolean pruneUnigramRules;
   private int minCount;
+  private int minSupport;
 
   protected void setup(Context context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
     String vocabulary_path = conf.getRaw("thrax.work-dir") + "vocabulary/part-*";
     Vocabulary.initialize(conf, vocabulary_path);
     minCount = conf.getInt("thrax.min-rule-count", 1);
+    minSupport = conf.getInt("thrax.min-rule-support", 1);
+    pruneUnigramRules = conf.getBoolean("thrax.prune-unigram-rules", false);
   }
 
   protected void reduce(AlignedRuleWritable key, Iterable<Annotation> values, Context context)
       throws IOException, InterruptedException {
     RuleWritable rule = key.getRule();
     AlignmentWritable alignment = key.getAlignment();
-    
-    Annotation merged = new Annotation(0);
+
+    Annotation merged = new Annotation();
     for (Annotation a : values)
       merged.merge(a);
 
     if (!rule.equals(currentRule)) {
       if (currentRule != null
-          && (currentAnnotation.count() >= minCount || isUnigramRule(currentRule))) {
+          && ((currentAnnotation.count() >= minCount && currentAnnotation.support() >= minSupport) 
+              || (!pruneUnigramRules && isUnigramRule(currentRule)))) {
         currentAnnotation.setAlignment(maxAlignment);
         context.write(currentRule, currentAnnotation);
         context.progress();
       }
       currentRule = new RuleWritable(rule);
-      currentAnnotation = new Annotation(0);
+      currentAnnotation = new Annotation();
       alignmentCount = 0;
       maxAlignment = null;
     }
@@ -60,7 +65,7 @@ public class ExtractionReducer
     if (currentRule != null) {
       if (currentAnnotation.count() >= minCount || isUnigramRule(currentRule)) {
         currentAnnotation.setAlignment(maxAlignment);
-        context.write(currentRule, currentAnnotation);        
+        context.write(currentRule, currentAnnotation);
         context.progress();
       }
     }

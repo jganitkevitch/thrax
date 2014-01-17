@@ -157,7 +157,9 @@ class CountPivotingReducer
   protected void pivotOne(ParaphrasePattern src, ParaphrasePattern tgt, Context context)
       throws IOException, InterruptedException {
     RuleWritable pivoted_rule = new RuleWritable();
-    Annotation pivoted_annotation = new Annotation(src.annotation.count() * tgt.annotation.count());
+    Annotation pivoted_annotation =
+        new Annotation(src.annotation.count() * tgt.annotation.count(), Math.min(
+            src.annotation.support(), tgt.annotation.support()));
     pivoted_rule.lhs = src.lhs;
     pivoted_rule.source = src.rhs;
     pivoted_rule.target = tgt.rhs;
