@@ -68,6 +68,10 @@ public class SplitAndFilter {
       BufferedWriter lex_writer = FileManager.getWriter(output_prefix + ".lexical.gz");
       BufferedWriter phr_writer = FileManager.getWriter(output_prefix + ".phrasal.gz");
       BufferedWriter syn_writer = FileManager.getWriter(output_prefix + ".syntax.gz");
+      BufferedWriter ccg_writer = FileManager.getWriter(output_prefix + ".ccg.gz");
+      BufferedWriter ptb_writer = FileManager.getWriter(output_prefix + ".noccg.gz");
+      BufferedWriter o2m_writer = FileManager.getWriter(output_prefix + ".o2m.gz");
+      BufferedWriter m2o_writer = FileManager.getWriter(output_prefix + ".m2o.gz");
 
       BufferedWriter lex_self_writer = FileManager.getWriter(output_prefix + ".lexical-self.gz");
       BufferedWriter phr_self_writer = FileManager.getWriter(output_prefix + ".phrasal-self.gz");
@@ -83,16 +87,20 @@ public class SplitAndFilter {
         String rule_line = reader.next().trim();
         boolean phrasal = true;
         boolean drop = true;
+        boolean ccg = false;
 
+        int lhs_idx = (scored ? 1 : 0);
         int src_idx = (scored ? 2 : 1);
-        int tgt_idx = src_idx + 1;      
-        
+        int tgt_idx = src_idx + 1;
+
         try {
           String[] fields = FormatUtils.P_DELIM.split(rule_line);
           String[] source = FormatUtils.P_SPACE.split(fields[src_idx]);
           String[] target = FormatUtils.P_SPACE.split(fields[tgt_idx]);
 
           boolean self = fields[src_idx].equals(fields[tgt_idx]);
+
+          if (fields[lhs_idx].contains("\\") || fields[lhs_idx].contains("/")) ccg = true;
 
           source_words.clear();
           target_words.clear();
@@ -102,8 +110,11 @@ public class SplitAndFilter {
             else
               source_words.add(word);
           }
-          for (String word : target)
-            if (!word.startsWith("[")) target_words.add(word);
+          for (String word : target) {
+            if (!word.startsWith("["))
+              target_words.add(word);
+            else if (!ccg && (word.contains("\\") || word.contains("/"))) ccg = true;
+          }
 
           if (!self) {
             HashSet<String> source_added = (HashSet<String>) source_words.clone();
@@ -146,6 +157,17 @@ public class SplitAndFilter {
             lex_count++;
             continue;
           }
+          // One-to-many rule.
+          if (phrasal && source.length == 1 && target.length > 1) {
+            o2m_writer.write(rule_line);
+            o2m_writer.newLine();
+          }
+
+          // Many-to-one rule.
+          if (phrasal && source.length > 1 && target.length == 1) {
+            m2o_writer.write(rule_line);
+            m2o_writer.newLine();
+          }
 
           // Phrasal rule.
           if (phrasal) {
@@ -167,6 +189,13 @@ public class SplitAndFilter {
           } else {
             syn_writer.write(rule_line);
             syn_writer.newLine();
+            if (ccg) {
+              ccg_writer.write(rule_line);
+              ccg_writer.newLine();
+            } else {
+              ptb_writer.write(rule_line);
+              ptb_writer.newLine();
+            }
           }
           syn_count++;
         } catch (Exception e) {
@@ -189,6 +218,10 @@ public class SplitAndFilter {
       lex_writer.close();
       phr_writer.close();
       syn_writer.close();
+      ccg_writer.close();
+      ptb_writer.close();
+      o2m_writer.close();
+      m2o_writer.close();
       stop_writer.close();
       lex_self_writer.close();
       phr_self_writer.close();
@@ -198,5 +231,4 @@ public class SplitAndFilter {
       logger.severe(e.getMessage());
     }
   }
-
 }
