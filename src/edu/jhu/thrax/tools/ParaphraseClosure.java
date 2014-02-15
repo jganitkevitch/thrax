@@ -46,7 +46,7 @@ public class ParaphraseClosure {
         return step + cost;
     } else {
       for (int pivot : pp.get(current).keySet()) {
-        float step = Math.max(pp.get(current).get(pivot), 5.0f);
+        float step = pp.get(current).get(pivot) + 3.0f;
         if (step + cost < max_cost) return search(pivot, goal, step + cost);
       }
       return -1;
@@ -150,6 +150,8 @@ public class ParaphraseClosure {
       System.err.println("]");
       reader.close();
 
+      System.err.print("[");
+      int mapped_count = 0;
       for (Paraphrase sp : paraphrases) {
         if (!pp.containsKey(sp.key)) pp.put(sp.key, new HashMap<Integer, Float>());
         HashMap<Integer, Float> map = pp.get(sp.key);
@@ -158,7 +160,9 @@ public class ParaphraseClosure {
         } else {
           map.put(sp.paraphrase, sp.score);
         }
+        if (++mapped_count % 100000 == 0) System.err.print("-");
       }
+      System.err.println("]");
       // paraphrases.clear();
 
       // Turning closure off.
