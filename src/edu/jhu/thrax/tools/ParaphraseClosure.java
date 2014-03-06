@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import edu.jhu.jerboa.util.FileManager;
@@ -18,10 +19,14 @@ public class ParaphraseClosure {
 
   private static final Logger logger = Logger.getLogger(ParaphraseClosure.class.getName());
 
-  private static float max_cost = 50;
+  private static float max_depth = 10;
 
   private static HashMap<Integer, HashMap<Integer, Float>> pp =
       new HashMap<Integer, HashMap<Integer, Float>>();
+
+  private static HashSet<Long> reference = new HashSet<Long>();
+  private static HashSet<Integer> ref_vocab = new HashSet<Integer>();
+  private static HashMap<String, Float> weights = new HashMap<String, Float>();
 
   public static long pack(int x, int y) {
     long xPacked = ((long) x) << 32;
@@ -37,17 +42,17 @@ public class ParaphraseClosure {
     return (int) (packed & 0xFFFFFFFFL);
   }
 
-  private static float search(int current, int goal, float cost) {
+  private static float search(int current, int goal, float cost, int depth, Set<Integer> visited) {
+    if (pp.get(current) == null || depth >= max_depth) return -1;
     if (pp.get(current).containsKey(goal)) {
-      float step = pp.get(current).get(goal);
-      if (step + cost > max_cost)
-        return -1;
-      else
-        return step + cost;
+      return pp.get(current).get(goal) + cost;
     } else {
+      visited.add(current);
       for (int pivot : pp.get(current).keySet()) {
-        float step = pp.get(current).get(pivot) + 3.0f;
-        if (step + cost < max_cost) return search(pivot, goal, step + cost);
+        if (!visited.contains(pivot)) {
+          float res = search(pivot, goal, pp.get(current).get(pivot) + cost, depth + 1, visited);
+          if (res > 0) return res;
+        }
       }
       return -1;
     }
@@ -71,7 +76,7 @@ public class ParaphraseClosure {
       } else if ("-o".equals(args[i]) && (i < args.length - 1)) {
         output_file = args[++i];
       } else if ("-m".equals(args[i]) && (i < args.length - 1)) {
-        max_cost = Float.parseFloat(args[++i]);
+        max_depth = Float.parseFloat(args[++i]);
       }
     }
 
@@ -91,10 +96,6 @@ public class ParaphraseClosure {
       logger.severe("No output file specified.");
       return;
     }
-
-    HashSet<Long> reference = new HashSet<Long>();
-    HashSet<Integer> ref_vocab = new HashSet<Integer>();
-    HashMap<String, Float> weights = new HashMap<String, Float>();
 
     try {
       LineReader reference_reader = new LineReader(reference_file);
@@ -129,9 +130,8 @@ public class ParaphraseClosure {
 
         String[] fields = FormatUtils.P_DELIM.split(rule_line);
 
-        if (fields[1].equals(fields[2]) || fields[1].contains(",1]"))
-          continue;
-        
+        if (fields[1].equals(fields[2]) || fields[1].contains(",1]")) continue;
+
         float score = 0;
         String[] features = FormatUtils.P_SPACE.split(fields[3]);
         for (String f : features) {
@@ -143,9 +143,10 @@ public class ParaphraseClosure {
 
         if (++rule_count % 100000 == 0) System.err.print("-");
 
-        if (p.score < 0) p.score *= -1;
+        // System.err.println(p.score);
 
-        if (p.score < max_cost) paraphrases.add(p);
+        if (p.score < 0) p.score *= -1;
+        paraphrases.add(p);
       }
       System.err.println("]");
       reader.close();
@@ -180,7 +181,7 @@ public class ParaphraseClosure {
             if (pmap == null) continue;
             for (int y : pmap.keySet()) {
               float cost = first + pmap.get(y);
-              if (cost < max_cost) {
+              if (cost < max_depth) {
                 if (add.containsKey(y)) {
                   if (add.get(y) > cost) add.put(y, cost);
                 } else {
@@ -220,7 +221,8 @@ public class ParaphraseClosure {
         int x = unpackX(r);
         int y = unpackY(r);
         if (pp.containsKey(x)) {
-          float cost = search(x, y, 0);
+          if (pp.get(x).containsKey(y)) continue;
+          float cost = search(x, y, 0, 0, new HashSet<Integer>());
           if (cost > 0) {
             paraphrases.add(new Paraphrase(x, y, cost));
             added++;
@@ -237,8 +239,7 @@ public class ParaphraseClosure {
       BufferedWriter output = FileManager.getWriter(output_file);
       for (Paraphrase p : paraphrases) {
         boolean print = false;
-        if (!ref_vocab.contains(p.key) || !ref_vocab.contains(p.paraphrase))
-          continue;
+        if (!ref_vocab.contains(p.key) || !ref_vocab.contains(p.paraphrase)) continue;
         long c = pack(p.key, p.paraphrase);
         if (reference.contains(c)) {
           right++;
@@ -253,21 +254,6 @@ public class ParaphraseClosure {
       output.close();
     } catch (IOException e) {
       logger.severe(e.getMessage());
-    }
-  }
-
-  class ScoredParaphrase implements Comparable<ScoredParaphrase> {
-    int paraphrase;
-    float score;
-
-    public ScoredParaphrase(int p, float s) {
-      paraphrase = p;
-      score = s;
-    }
-
-    @Override
-    public int compareTo(ScoredParaphrase that) {
-      return Float.compare(this.score, that.score);
     }
   }
 
