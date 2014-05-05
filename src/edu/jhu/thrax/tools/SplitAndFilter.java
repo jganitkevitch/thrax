@@ -65,20 +65,20 @@ public class SplitAndFilter {
 
     try {
       LineReader reader = new LineReader(grammar_file);
-      BufferedWriter lex_writer = FileManager.getWriter(output_prefix + ".lexical.gz");
-      BufferedWriter phr_writer = FileManager.getWriter(output_prefix + ".phrasal.gz");
-      BufferedWriter syn_writer = FileManager.getWriter(output_prefix + ".syntax.gz");
-      BufferedWriter ccg_writer = FileManager.getWriter(output_prefix + ".ccg.gz");
-      BufferedWriter ptb_writer = FileManager.getWriter(output_prefix + ".noccg.gz");
-      BufferedWriter o2m_writer = FileManager.getWriter(output_prefix + ".o2m.gz");
-      BufferedWriter m2o_writer = FileManager.getWriter(output_prefix + ".m2o.gz");
+      BufferedWriter lex_writer = FileManager.getWriter(output_prefix + "-lexical.gz");
+      BufferedWriter phr_writer = FileManager.getWriter(output_prefix + "-phrasal.gz");
+      BufferedWriter syn_writer = FileManager.getWriter(output_prefix + "-syntax.gz");
+      BufferedWriter ccg_writer = FileManager.getWriter(output_prefix + "-ccg.gz");
+      BufferedWriter ptb_writer = FileManager.getWriter(output_prefix + "-noccg.gz");
+      BufferedWriter o2m_writer = FileManager.getWriter(output_prefix + "-o2m.gz");
+      BufferedWriter m2o_writer = FileManager.getWriter(output_prefix + "-m2o.gz");
 
-      BufferedWriter lex_self_writer = FileManager.getWriter(output_prefix + ".lexical-self.gz");
-      BufferedWriter phr_self_writer = FileManager.getWriter(output_prefix + ".phrasal-self.gz");
-      BufferedWriter syn_self_writer = FileManager.getWriter(output_prefix + ".syntax-self.gz");
+      BufferedWriter lex_self_writer = FileManager.getWriter(output_prefix + "-lexical-identity.gz");
+      BufferedWriter phr_self_writer = FileManager.getWriter(output_prefix + "-phrasal-identity.gz");
+      BufferedWriter syn_self_writer = FileManager.getWriter(output_prefix + "-syntax-identity.gz");
 
-      BufferedWriter stop_writer = FileManager.getWriter(output_prefix + ".stop.gz");
-      BufferedWriter stats_writer = FileManager.getWriter(output_prefix + ".stats.txt");
+      BufferedWriter stop_writer = FileManager.getWriter(output_prefix + "-stop.gz");
+      BufferedWriter stats_writer = FileManager.getWriter(output_prefix + "-stats.txt");
 
       HashSet<String> source_words = new HashSet<String>();
       HashSet<String> target_words = new HashSet<String>();
