@@ -6,8 +6,8 @@ import java.util.Set;
 import org.apache.hadoop.io.FloatWritable;
 
 import edu.jhu.thrax.hadoop.datatypes.FeatureMap;
-import edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature;
-import edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature;
+import edu.jhu.thrax.hadoop.features.mapreduce.SourcePhraseGivenTargetFeature;
+import edu.jhu.thrax.hadoop.features.mapreduce.TargetPhraseGivenSourceFeature;
 
 public class PivotedTargetPhraseGivenSourceFeature extends PivotedNegLogProbFeature {
 

@@ -16,8 +16,8 @@ import org.apache.hadoop.util.ToolRunner;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeature;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureFactory;
 import edu.jhu.thrax.hadoop.features.annotation.AnnotationFeatureJob;
-import edu.jhu.thrax.hadoop.features.mapred.MapReduceFeature;
-import edu.jhu.thrax.hadoop.features.mapred.MapReduceFeatureFactory;
+import edu.jhu.thrax.hadoop.features.mapreduce.MapReduceFeature;
+import edu.jhu.thrax.hadoop.features.mapreduce.MapReduceFeatureFactory;
 import edu.jhu.thrax.hadoop.features.pivot.PivotedFeature;
 import edu.jhu.thrax.hadoop.features.pivot.PivotedFeatureFactory;
 import edu.jhu.thrax.hadoop.jobs.DistributionalContextExtractionJob;
@@ -221,6 +221,9 @@ public class Thrax extends Configured implements Tool {
       try {
         ThraxJob thraxJob = theClass.newInstance();
         Job job = thraxJob.getJob(conf);
+        
+        System.err.println("WAITFORCOMPLETION: " + theClass.getName());
+        
         job.waitForCompletion(false);
         thrax.workerDone(theClass, job.isSuccessful());
       } catch (Exception e) {

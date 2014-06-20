@@ -1,4 +1,4 @@
-package edu.jhu.thrax.hadoop.features.mapred;
+package edu.jhu.thrax.hadoop.features.mapreduce;
 
 import java.util.ArrayList;
 import java.util.List;

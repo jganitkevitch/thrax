@@ -6,7 +6,7 @@ import java.util.Set;
 import org.apache.hadoop.io.FloatWritable;
 
 import edu.jhu.thrax.hadoop.datatypes.FeatureMap;
-import edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenLHSFeature;
+import edu.jhu.thrax.hadoop.features.mapreduce.TargetPhraseGivenLHSFeature;
 
 public class PivotedTargetPhraseGivenLHSFeature extends NonAggregatingPivotedFeature {
 

@@ -1,4 +1,4 @@
-package edu.jhu.thrax.hadoop.features.mapred;
+package edu.jhu.thrax.hadoop.features.mapreduce;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -21,15 +21,15 @@ import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
 import edu.jhu.thrax.util.Vocabulary;
 
 @SuppressWarnings("rawtypes")
-public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
+public class TargetPhraseGivenLHSFeature extends MapReduceFeature {
 
-  public static final String NAME = "e_given_f_phrase";
-  public static final String LABEL = "p(e|f)";
-  
+  public static final String NAME = "e_given_lhs";
+  public static final String LABEL = "p(e|LHS)";
+
   public String getName() {
     return NAME;
   }
-  
+
   public String getLabel() {
     return LABEL;
   }
@@ -39,7 +39,7 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
   }
 
   public Class<? extends Partitioner> partitionerClass() {
-    return RuleWritable.SourcePartitioner.class;
+    return RuleWritable.LHSPartitioner.class;
   }
 
   public Class<? extends Mapper> mapperClass() {
@@ -51,33 +51,28 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
   }
 
   private static class Map extends Mapper<RuleWritable, Annotation, RuleWritable, FloatWritable> {
-
-    protected void setup(Context context) throws IOException, InterruptedException {
-      Configuration conf = context.getConfiguration();
-      String vocabulary_path = conf.getRaw("thrax.work-dir") + "vocabulary/part-*";
-      Vocabulary.initialize(conf, vocabulary_path);
-    }
-
     protected void map(RuleWritable key, Annotation value, Context context) throws IOException,
         InterruptedException {
+      RuleWritable lhs_marginal = new RuleWritable(key);
+      RuleWritable lhs_target_marginal = new RuleWritable(key);
 
-      RuleWritable source_marginal = new RuleWritable(key);
-      source_marginal.lhs = PrimitiveUtils.MARGINAL_ID;
-      source_marginal.target = PrimitiveArrayMarginalComparator.MARGINAL;
-      source_marginal.monotone = false;
+      lhs_marginal.source = PrimitiveArrayMarginalComparator.MARGINAL;
+      lhs_marginal.target = PrimitiveArrayMarginalComparator.MARGINAL;
+      lhs_marginal.monotone = false;
 
-      RuleWritable source_target_marginal = new RuleWritable(key);
-      source_target_marginal.lhs = PrimitiveUtils.MARGINAL_ID;
+      lhs_target_marginal.source = PrimitiveArrayMarginalComparator.MARGINAL;
+      lhs_target_marginal.monotone = false;
 
       FloatWritable count = new FloatWritable(value.count());
 
-      context.write(source_marginal, count);
-      context.write(source_target_marginal, count);
       context.write(key, count);
+      context.write(lhs_target_marginal, count);
+      context.write(lhs_marginal, count);
     }
   }
 
-  private static class Reduce extends Reducer<RuleWritable, FloatWritable, RuleWritable, FeaturePair> {
+  private static class Reduce
+      extends Reducer<RuleWritable, FloatWritable, RuleWritable, FeaturePair> {
     private float marginal;
     private FloatWritable prob;
 
@@ -90,12 +85,16 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
     protected void reduce(RuleWritable key, Iterable<FloatWritable> values, Context context)
         throws IOException, InterruptedException {
       if (Arrays.equals(key.target, PrimitiveArrayMarginalComparator.MARGINAL)) {
+        // we only get here if it is the very first time we saw the LHS
         marginal = 0;
         for (FloatWritable x : values)
           marginal += x.get();
         return;
       }
-      if (key.lhs == PrimitiveUtils.MARGINAL_ID) {
+
+      // control only gets here if we are using the same marginal
+      if (Arrays.equals(key.source, PrimitiveArrayMarginalComparator.MARGINAL)) {
+        // we only get in here if it's a new source side
         float count = 0;
         for (FloatWritable x : values)
           count += x.get();
@@ -122,7 +121,9 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
         int h1 = WritableUtils.decodeVIntSize(b1[s1 + 1]) + 1;
         int h2 = WritableUtils.decodeVIntSize(b2[s2 + 1]) + 1;
 
-        int cmp = SOURCE_COMP.compare(b1, s1 + h1, l1 - h1, b2, s2 + h2, l2 - h2);
+        int lhs1 = Math.abs(WritableComparator.readVInt(b1, s1 + 1));
+        int lhs2 = Math.abs(WritableComparator.readVInt(b2, s2 + 1));
+        int cmp = PrimitiveUtils.compare(lhs1, lhs2);
         if (cmp != 0) return cmp;
 
         cmp = TARGET_COMP.compare(b1, s1 + h1, l1 - h1, b2, s2 + h2, l2 - h2);
@@ -131,9 +132,7 @@ public class TargetPhraseGivenSourceFeature extends MapReduceFeature {
         cmp = PrimitiveUtils.compare(b1[s1], b2[s2]);
         if (cmp != 0) return cmp;
 
-        int lhs1 = Math.abs(WritableComparator.readVInt(b1, s1 + 1));
-        int lhs2 = Math.abs(WritableComparator.readVInt(b2, s2 + 1));
-        return PrimitiveUtils.compare(lhs1, lhs2);
+        return SOURCE_COMP.compare(b1, s1 + h1, l1 - h1, b2, s2 + h2, l2 - h2);
       } catch (IOException e) {
         throw new IllegalArgumentException(e);
       }

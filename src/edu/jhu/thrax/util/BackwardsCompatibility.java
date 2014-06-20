@@ -4,8 +4,8 @@ import edu.jhu.thrax.hadoop.features.annotation.SourceGivenTargetLexicalProbabil
 import edu.jhu.thrax.hadoop.features.annotation.TargetGivenSourceLexicalProbabilityFeature;
 import edu.jhu.thrax.hadoop.features.annotation.UnalignedSourceCounterFeature;
 import edu.jhu.thrax.hadoop.features.annotation.UnalignedTargetCounterFeature;
-import edu.jhu.thrax.hadoop.features.mapred.SourcePhraseGivenTargetFeature;
-import edu.jhu.thrax.hadoop.features.mapred.TargetPhraseGivenSourceFeature;
+import edu.jhu.thrax.hadoop.features.mapreduce.SourcePhraseGivenTargetFeature;
+import edu.jhu.thrax.hadoop.features.mapreduce.TargetPhraseGivenSourceFeature;
 
 public class BackwardsCompatibility {
 
