@@ -122,6 +122,7 @@ public class AlignmentWritable implements WritableComparable<AlignmentWritable> 
 
   public void readFields(DataInput in) throws IOException {
     points = PrimitiveUtils.readByteArray(in);
+    flipped = null;
   }
 
   public String toString(String glue) {
