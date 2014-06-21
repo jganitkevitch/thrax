@@ -33,6 +33,7 @@ import edu.jhu.thrax.hadoop.features.mapreduce.MapReduceFeatureFactory;
 import edu.jhu.thrax.hadoop.features.pivot.PivotedAnnotationFeature;
 import edu.jhu.thrax.hadoop.features.pivot.PivotedFeature;
 import edu.jhu.thrax.hadoop.features.pivot.PivotedFeatureFactory;
+import edu.jhu.thrax.util.exceptions.MalformedInputException;
 
 
 /**
@@ -237,12 +238,15 @@ public class Vocabulary {
     }
   }
 
-  public static int[] addAll(String sentence) {
+  public static int[] addAll(String sentence) throws MalformedInputException {
     synchronized (lock) {
       String[] tokens = FormatUtils.P_SPACE.split(sentence);
       int[] ids = new int[tokens.length];
-      for (int i = 0; i < tokens.length; i++)
+      for (int i = 0; i < tokens.length; i++) {
+        if (tokens[i] == null || tokens[i].isEmpty())
+          throw new MalformedInputException("empty token");
         ids[i] = id(tokens[i]);
+      }
       return ids;
     }
   }

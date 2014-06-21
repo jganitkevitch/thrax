@@ -48,8 +48,11 @@ public class ThraxInputParser {
     ThraxInput input = new ThraxInput();
     String[] fields = FormatUtils.P_DELIM.split(line);
     if (fields.length < types.length) throw new MalformedInputException("not enough fields");
-    for (int i = 0; i < types.length; ++i)
+    for (int i = 0; i < types.length; ++i) {
+      if ((fields[i] == null || fields[i].isEmpty()) && types[i] != Format.SKIP)
+        throw new MalformedInputException("empty field in " + i);
       types[i].fill(input, names[i], fields[i]);
+    }
     input.sanityCheck();
     return input;
   }
@@ -62,13 +65,13 @@ public class ThraxInputParser {
     },
 
     SRC("src", "tgt") {
-      public void fill(ThraxInput in, String name, String field) {
+      public void fill(ThraxInput in, String name, String field) throws MalformedInputException {
         in.source = Vocabulary.addAll(field);
       }
     },
 
     TGT("tgt", "src") {
-      public void fill(ThraxInput in, String name, String field) {
+      public void fill(ThraxInput in, String name, String field) throws MalformedInputException {
         in.target = Vocabulary.addAll(field);
       }
     },
@@ -102,14 +105,14 @@ public class ThraxInputParser {
     },
 
     SRC_TAG("src_tag", "tgt_tag") {
-      public void fill(ThraxInput in, String name, String field) {
+      public void fill(ThraxInput in, String name, String field) throws MalformedInputException {
         if (in.src_tags == null) in.src_tags = new HashMap<String, int[]>();
         in.src_tags.put(name, Vocabulary.addAll(field));
       }
     },
 
     TGT_TAG("tgt_tag", "src_tag") {
-      public void fill(ThraxInput in, String name, String field) {
+      public void fill(ThraxInput in, String name, String field) throws MalformedInputException {
         if (in.tgt_tags == null) in.tgt_tags = new HashMap<String, int[]>();
         in.tgt_tags.put(name, Vocabulary.addAll(field));
       }

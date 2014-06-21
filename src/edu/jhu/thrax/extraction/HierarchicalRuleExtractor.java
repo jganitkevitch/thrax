@@ -11,6 +11,7 @@ import edu.jhu.thrax.input.Alignment;
 import edu.jhu.thrax.input.ArrayAlignment;
 import edu.jhu.thrax.util.FormatUtils;
 import edu.jhu.thrax.util.Vocabulary;
+import edu.jhu.thrax.util.exceptions.MalformedInputException;
 
 public class HierarchicalRuleExtractor {
   private int arityLimit = 2;
@@ -166,7 +167,7 @@ public class HierarchicalRuleExtractor {
     return true;
   }
 
-  public static void main(String[] argv) throws IOException {
+  public static void main(String[] argv) throws IOException, MalformedInputException {
     Scanner scanner = new Scanner(System.in, "utf-8");
     HierarchicalRuleExtractor extractor = new HierarchicalRuleExtractor();
     SpanLabeler labeler = null;
