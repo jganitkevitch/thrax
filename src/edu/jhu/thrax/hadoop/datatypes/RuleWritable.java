@@ -28,16 +28,6 @@ public class RuleWritable implements WritableComparable<RuleWritable> {
     target = null;
   }
 
-  // TODO: this is broken.
-  @Deprecated
-  public RuleWritable(String r) {
-    String[] fields = FormatUtils.P_DELIM.split(r);
-    lhs = Vocabulary.id(fields[0]);
-    source = Vocabulary.addAll(fields[1]);
-    target = Vocabulary.addAll(fields[2]);
-    monotone = true;
-  }
-
   public RuleWritable(RuleWritable r) {
     this.set(r);
   }
