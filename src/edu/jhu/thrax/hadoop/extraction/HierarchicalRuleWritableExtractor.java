@@ -60,6 +60,7 @@ public class HierarchicalRuleWritableExtractor implements RuleWritableExtractor 
     String policy;
     if (conf.get("thrax.allow-nonlexical-x") != null) {
       // allow-nonlexical-x was set to some value, so respect that
+      // TODO: this is pretty behavior – it's not intuitive to get Thrax to not produce X rules.
       policy =
           BackwardsCompatibility.defaultLabelPolicy(conf.getBoolean("thrax.allow-nonlexical-x",
               true));
