@@ -58,6 +58,9 @@ public class CreateGlueGrammar {
         nts.add(lhs);
       }
     }
+    // TODO: Less hacky.
+    // Adding default non-terminal, also used for OOV rules. 
+    nts.add("X");
 
     System.out.println(String.format(R_START, GOAL));
     for (String nt : nts)
