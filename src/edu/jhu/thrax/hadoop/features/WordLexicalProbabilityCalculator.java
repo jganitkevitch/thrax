@@ -20,7 +20,6 @@ import edu.jhu.thrax.input.ThraxInput;
 import edu.jhu.thrax.input.ThraxInputParser;
 import edu.jhu.thrax.util.Vocabulary;
 import edu.jhu.thrax.util.exceptions.MalformedInputException;
-import edu.jhu.thrax.util.io.InputUtilities;
 
 public class WordLexicalProbabilityCalculator extends Configured {
   public static final long UNALIGNED = 0x0000000000000000L;
