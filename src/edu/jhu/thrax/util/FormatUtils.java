@@ -1,5 +1,6 @@
 package edu.jhu.thrax.util;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -132,10 +133,10 @@ public class FormatUtils {
         if (value == -0.0 || Math.abs(value) < 0.000005)
           score = "0";
         else
-          score = String.format("%.5f", value);
+          score = String.format(new Locale("en", "US"), "%.5f", value);
         if (sparse && Float.parseFloat(score) == 0) continue;
       } else if (val instanceof IntWritable) {
-        score = String.format("%d", ((IntWritable) fs.get(t)).get());
+        score = String.format(new Locale("en", "US"), "%d", ((IntWritable) fs.get(t)).get());
         if (sparse && Integer.parseInt(score) == 0) continue;
       } else if (val instanceof Text) {
         score = ((Text) fs.get(t)).toString();
@@ -163,7 +164,7 @@ public class FormatUtils {
     sb.append(DELIM);
     for (Text t : fs.keySet()) {
       int i = fs.get(t);
-      if (i != 0) sb.append(String.format("%s=%d ", t, i));
+      if (i != 0) sb.append(String.format(new Locale("en", "US"), "%s=%d ", t, i));
     }
     return new Text(sb.substring(0, sb.length() - 1));
   }
