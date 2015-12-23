@@ -66,6 +66,7 @@ public class TestSetFilter {
         addSentenceToWordHash(sentencesByWord, line, testSentences.size());
         testSentences.add(line);
       }
+      scanner.close();
     } catch (FileNotFoundException e) {
       System.err.printf("Could not open %s\n", e.getMessage());
     }
@@ -143,7 +144,7 @@ public class TestSetFilter {
           rulesOut++;
         }
       }
-
+      scanner.close();
       out.close();
 
       if (verbose) {
@@ -367,6 +368,8 @@ public class TestSetFilter {
         System.out.flush();
       }
     }
+    scanner.close();
+    
     if (filter.verbose) {
       System.err.println("[INFO] Total rules read: " + rulesIn);
       System.err.println("[INFO] Rules kept: " + rulesOut);
