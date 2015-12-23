@@ -1,4 +1,4 @@
-package edu.jhu.thrax.hadoop.features.mapreduce;
+package edu.jhu.thrax.hadoop.features.mapred;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Job;
@@ -18,34 +18,24 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 
 import edu.jhu.thrax.hadoop.datatypes.FeaturePair;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
 import edu.jhu.thrax.hadoop.features.Feature;
+import edu.jhu.thrax.hadoop.jobs.DefaultValues;
 import edu.jhu.thrax.hadoop.jobs.ExtractionJob;
 import edu.jhu.thrax.hadoop.jobs.ThraxJob;
 
 @SuppressWarnings("rawtypes")
 public abstract class MapReduceFeature implements Feature, ThraxJob {
-
-  protected static HashSet<Class<? extends ThraxJob>> prereqs =
-      new HashSet<Class<? extends ThraxJob>>();
-
-  public Set<Class<? extends ThraxJob>> getPrerequisites() {
-    prereqs.add(ExtractionJob.class);
-    return prereqs;
-  }
-
-  public static void addPrerequisite(Class<? extends ThraxJob> c) {
-    prereqs.add(c);
-  }
-
+  
   public String getOutputSuffix() {
     return getName();
   }
 
   public Class<? extends Reducer> combinerClass() {
-    return FloatSumReducer.class;
+    return IntSumReducer.class;
   }
 
   public abstract Class<? extends Mapper> mapperClass();
@@ -73,8 +63,8 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
     job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
     setMapOutputFormat(job);
-
-    int num_reducers = conf.getInt("thrax.reducers", 4);
+    
+    int num_reducers = conf.getInt("thrax.reducers", conf.getInt("mapreduce.job.reduces", DefaultValues.DEFAULT_NUM_REDUCERS));
     job.setNumReduceTasks(num_reducers);
 
     FileInputFormat.setInputPaths(job, new Path(conf.get("thrax.work-dir") + "rules"));
@@ -82,13 +72,19 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
     return job;
   }
 
+  public Set<Class<? extends ThraxJob>> getPrerequisites() {
+    Set<Class<? extends ThraxJob>> result = new HashSet<Class<? extends ThraxJob>>();
+    result.add(ExtractionJob.class);
+    return result;
+  }
+
   public abstract void unaryGlueRuleScore(int nt, Map<Integer, Writable> map);
 
   public abstract void binaryGlueRuleScore(int nt, Map<Integer, Writable> map);
-
+  
   protected void setMapOutputFormat(Job job) {
     job.setMapOutputKeyClass(RuleWritable.class);
-    job.setMapOutputValueClass(FloatWritable.class);
+    job.setMapOutputValueClass(IntWritable.class);
   }
 
 }
