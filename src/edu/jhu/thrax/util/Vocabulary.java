@@ -166,7 +166,8 @@ public class Vocabulary {
       initialize(conf);
 
       for (FileStatus file : files) {
-        SequenceFile.Reader reader = new SequenceFile.Reader(file_system, file.getPath(), conf);
+        SequenceFile.Reader reader = 
+            new SequenceFile.Reader(conf, SequenceFile.Reader.file(file.getPath()));
         Text h_token = new Text();
         IntWritable h_id = new IntWritable();
         while (reader.next(h_id, h_token)) {

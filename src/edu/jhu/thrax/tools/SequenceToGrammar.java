@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
@@ -51,7 +50,7 @@ public class SequenceToGrammar {
     Text rule_string = new Text();
     Configuration config = new Configuration();
     Path path = new Path(input_file);
-    SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.getLocal(config), path, config);
+    SequenceFile.Reader reader = new SequenceFile.Reader(config, SequenceFile.Reader.file(path));
 
     BufferedWriter grammar_writer = FileManager.getWriter(output_file);
     long rule_count = 0;

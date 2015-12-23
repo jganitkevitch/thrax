@@ -1,10 +1,8 @@
 package edu.jhu.thrax.util;
 
-import java.net.URI;
 import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -17,11 +15,12 @@ public class SequenceFileCreator
 		LongWritable k = new LongWritable();
 		Text v = new Text();
 
-		URI uri = URI.create(argv[0]);
 		Configuration conf = new Configuration();
-		FileSystem fs = FileSystem.get(uri, conf);
 		Path path = new Path(argv[0]);
-		SequenceFile.Writer writer = SequenceFile.createWriter(fs, conf, path, LongWritable.class, Text.class);
+		SequenceFile.Writer writer = SequenceFile.createWriter(conf, 
+		    SequenceFile.Writer.file(path), 
+		    SequenceFile.Writer.keyClass(LongWritable.class), 
+		    SequenceFile.Writer.valueClass(Text.class));
 
 		long current = 0;
 		Scanner scanner = new Scanner(System.in, "UTF-8");

@@ -1,4 +1,4 @@
-package edu.jhu.thrax.hadoop.features.mapred;
+package edu.jhu.thrax.hadoop.features.mapreduce;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Job;
@@ -18,7 +18,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 
 import edu.jhu.thrax.hadoop.datatypes.FeaturePair;
 import edu.jhu.thrax.hadoop.datatypes.RuleWritable;
@@ -30,12 +29,24 @@ import edu.jhu.thrax.hadoop.jobs.ThraxJob;
 @SuppressWarnings("rawtypes")
 public abstract class MapReduceFeature implements Feature, ThraxJob {
   
+  protected static HashSet<Class<? extends ThraxJob>> prereqs =
+      new HashSet<Class<? extends ThraxJob>>();
+
+  public Set<Class<? extends ThraxJob>> getPrerequisites() {
+    prereqs.add(ExtractionJob.class);
+    return prereqs;
+  }
+
+  public static void addPrerequisite(Class<? extends ThraxJob> c) {
+    prereqs.add(c);
+  }
+  
   public String getOutputSuffix() {
     return getName();
   }
 
   public Class<? extends Reducer> combinerClass() {
-    return IntSumReducer.class;
+    return FloatSumReducer.class;
   }
 
   public abstract Class<? extends Mapper> mapperClass();
@@ -48,7 +59,7 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
 
   public Job getJob(Configuration conf) throws IOException {
     String name = getName();
-    Job job = new Job(conf, name);
+    Job job = Job.getInstance(conf, name);
     job.setJarByClass(this.getClass());
 
     job.setMapperClass(this.mapperClass());
@@ -72,19 +83,12 @@ public abstract class MapReduceFeature implements Feature, ThraxJob {
     return job;
   }
 
-  public Set<Class<? extends ThraxJob>> getPrerequisites() {
-    Set<Class<? extends ThraxJob>> result = new HashSet<Class<? extends ThraxJob>>();
-    result.add(ExtractionJob.class);
-    return result;
-  }
-
   public abstract void unaryGlueRuleScore(int nt, Map<Integer, Writable> map);
 
   public abstract void binaryGlueRuleScore(int nt, Map<Integer, Writable> map);
   
   protected void setMapOutputFormat(Job job) {
     job.setMapOutputKeyClass(RuleWritable.class);
-    job.setMapOutputValueClass(IntWritable.class);
+    job.setMapOutputValueClass(FloatWritable.class);
   }
-
 }

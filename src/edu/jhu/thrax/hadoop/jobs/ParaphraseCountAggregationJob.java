@@ -26,7 +26,7 @@ public class ParaphraseCountAggregationJob implements ThraxJob {
       new HashSet<Class<? extends ThraxJob>>();
 
   public Job getJob(Configuration conf) throws IOException {
-    Job job = new Job(conf, "count-aggregate");
+    Job job = Job.getInstance(conf, "count-aggregate");
 
     job.setJarByClass(ExtractionReducer.class);
 

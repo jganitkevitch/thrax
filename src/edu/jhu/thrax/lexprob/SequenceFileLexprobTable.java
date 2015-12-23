@@ -52,7 +52,6 @@ public abstract class SequenceFileLexprobTable {
     final FloatWritable d = new FloatWritable(0.0f);
     final FileStatus[] theFiles = files;
     final Configuration theConf = conf;
-    final FileSystem fs = theFS;
 
     final Iterator<TableEntry> iterator = new Iterator<TableEntry>() {
       int fileIndex = 0;
@@ -66,7 +65,10 @@ public abstract class SequenceFileLexprobTable {
           if (lookahead != null) return true;
           // if the reader is null, we haven't looked at a single
           // file yet, so set the reader to read the first file
-          if (reader == null) reader = new SequenceFile.Reader(fs, theFiles[0].getPath(), theConf);
+          if (reader == null) { 
+            reader = new SequenceFile.Reader(theConf, 
+              SequenceFile.Reader.file(theFiles[0].getPath()));
+          }
           // reader is not null here, so try to read an entry
           boolean gotNew = reader.next(pair, d);
           if (gotNew) {
@@ -79,7 +81,8 @@ public abstract class SequenceFileLexprobTable {
           // but if there are no more, return false
           if (fileIndex >= theFiles.length) return false;
           reader.close();
-          reader = new SequenceFile.Reader(fs, theFiles[fileIndex].getPath(), theConf);
+          reader = new SequenceFile.Reader(theConf, 
+              SequenceFile.Reader.file(theFiles[fileIndex].getPath()));
           // new file, so try again
           gotNew = reader.next(pair, d);
           if (gotNew) {

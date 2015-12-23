@@ -37,7 +37,7 @@ public class ParaphraseCountPivotingJob implements ThraxJob {
   }
 
   public Job getJob(Configuration conf) throws IOException {
-    Job job = new Job(conf, "count-pivoting");
+    Job job = Job.getInstance(conf, "count-pivoting");
 
     job.setJarByClass(ParaphraseCountPivotingJob.class);
 
